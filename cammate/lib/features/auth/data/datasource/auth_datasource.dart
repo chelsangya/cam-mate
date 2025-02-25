@@ -59,11 +59,12 @@ class AuthRemoteDataSource {
         if (response.data['success']) {
           print(response.data);
           String token = response.data["token"];
+          var user = response.data["user"];
           // String name =
           //     '${response.data["userData"]["firstName"]} ${response.data["userData"]["lastName"]}';
           // String id = response.data["userData"]["_id"];
           // String phone = response.data["userData"]["phone"];
-          return Right([token,"1","2","3" ]);
+          return Right([token, user]);
         } else {
           return Left(Failure(error: response.data["message"]));
         }
@@ -84,5 +85,4 @@ class AuthRemoteDataSource {
       );
     }
   }
-
 }

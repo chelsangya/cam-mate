@@ -7,29 +7,29 @@ class AuthAPIModel {
   final String? userId;
   final String email;
   final String? password;
-  final String role;
+  final String? role;
   @JsonKey(name: 'is_active')
-  final bool isActive;
+  final bool? isActive;
   @JsonKey(name: 'is_staff')
-  final bool isStaff;
+  final bool? isStaff;
   @JsonKey(name: 'is_superuser')
-  final bool isSuperuser;
+  final bool? isSuperuser;
 
   AuthAPIModel({
     this.userId,
     required this.email,
     this.password,
-    required this.role,
-    required this.isActive,
-    required this.isStaff,
-    required this.isSuperuser,
+    this.role,
+    this.isActive,
+    this.isStaff,
+    this.isSuperuser,
   });
 
   factory AuthAPIModel.fromJson(Map<String, dynamic> json) {
     return AuthAPIModel(
       userId: json['_id'],
       email: json['email'],
-      password: null, // Django does not return passwords
+      password: json['password'],
       role: json['role'],
       isActive: json['is_active'],
       isStaff: json['is_staff'],

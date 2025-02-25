@@ -32,9 +32,8 @@ class _SplashViewState extends State<SplashView>
         if (data.isRight()) {
           token = data.getOrElse(() => null);
         }
-
         if (token == null) {
-          Navigator.of(context).pushReplacementNamed(AppRoute.signinRoute);
+          Navigator.of(context).pushReplacementNamed(AppRoute.loginRoute);
         } else {
           Navigator.of(context).pushReplacementNamed(AppRoute.homeRoute);
         }
