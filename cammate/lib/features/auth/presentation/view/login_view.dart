@@ -1,3 +1,4 @@
+import 'package:cammate/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,18 +36,45 @@ class _LoginViewState extends ConsumerState<LoginView> {
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) {
       return 'Please enter a password';
-    } else if (value.length < 8) {
-      return 'Password cannot be less than 8 characters';
+    } else if (value.length < 3) {
+      return 'Password cannot be less than 3 characters';
     } else if (value.length > 15) {
       return 'Password cannot be more than 15 characters';
     }
     return null;
   }
 
+  // Login function
+  void login(BuildContext context) {
+    final email = emailController.text;
+    final password = passwordController.text;
+
+    final emailError = validateEmail(email);
+    final passwordError = validatePassword(password);
+
+    if (emailError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(emailError), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    if (passwordError != null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(passwordError), backgroundColor: Colors.red),
+      );
+      return;
+    }
+
+    ref
+        .read(authViewModelProvider.notifier)
+        .loginUser(context, email, password);
+    // Navigator.of(context).pushNamed('/');
+  }
+
   @override
   Widget build(BuildContext context) {
-  // final authState = ref.watch(authViewModelProvider);
-
+    // final authState = ref.watch(authViewModelProvider);
 
     return Scaffold(
       // fffbff
@@ -163,18 +191,18 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           ),
                         ],
                       ),
+                      SizedBox(height: 20),
                       SizedBox(
                         width: 400,
                         child: ElevatedButton(
                           onPressed: () {
-                            // login(context);
+                            login(context);
                             // ScaffoldMessenger.of(context).showSnackBar(
                             //   const SnackBar(
                             //     content: Text('Logging in...'),
                             //     backgroundColor: Colors.green,
                             //   ),
                             // );
-                            // Navigator.of(context).pushNamed('/home');
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF444444),
@@ -197,21 +225,27 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         ),
                       ),
                       const SizedBox(height: 10),
-
-                      //   onPressed: () {},
-                      //   icon: const Icon(Icons.face),
-                      //   label: const Text('Sign in with Face ID'),
-                      //   style: ElevatedButton.styleFrom(
-                      //     shadowColor: const Color(0xFF0B2B3D),
-                      //     side: const BorderSide(color: Color(0xFF0B2B3D)),
-                      //     foregroundColor: Colors.black,
-                      //     backgroundColor: Colors.white,
-                      //     shape: RoundedRectangleBorder(
-                      //       borderRadius: BorderRadius.circular(30),
-                      //     ),
-                      //   ),
-                      // ),
-                      // const SizedBox(width: 10),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: <Widget>[
+                          const Text(
+                            'Don\'t have an account?',
+                            style: TextStyle(color: Colors.black, fontSize: 17),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              // Navigator.of(context).pushNamed('/register');
+                            },
+                            child: Text(
+                              'Register',
+                              style: TextStyle(
+                                color: Colors.blue[900],
+                                fontSize: 18,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ],

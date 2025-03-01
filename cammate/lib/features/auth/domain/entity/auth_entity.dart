@@ -29,4 +29,29 @@ class AuthEntity extends Equatable {
     isStaff,
     isSuperuser,
   ];
+  factory AuthEntity.fromJson(Map<String, dynamic> json) => AuthEntity(
+        userId: json["userId"],
+        email: json["email"],
+        password: json["password"],
+        role: json["role"],
+        isActive: json["isActive"],
+        isStaff: json["isStaff"],
+        isSuperuser: json["isSuperuser"],
+
+      );
+
+  Map<String, dynamic> toJson() => {
+        "userId": userId,
+        "email": email,
+        "password": password,
+        "role": role,
+        "isActive": isActive,
+        "isStaff": isStaff,
+        "isSuperuser": isSuperuser,
+      };
+
+  @override
+  String toString() {
+    return 'AuthEntity(userId: $userId, email: $email, password: $password, role: $role, isActive: $isActive, isStaff: $isStaff, isSuperuser: $isSuperuser)';
+  }
 }

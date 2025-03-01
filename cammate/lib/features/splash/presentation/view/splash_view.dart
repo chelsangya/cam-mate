@@ -62,16 +62,16 @@ class _SplashViewState extends State<SplashView>
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 5),
                 ),
-                child: const Padding(
+                child: Padding(
                   padding: EdgeInsets.all(30.0),
-                  child: Icon(Icons.security, size: 80, color: Colors.white),
+                  child: Image.asset('assets/images/logo.png'),
                 ),
               ),
             ),
             const Positioned(
               bottom: 50,
               left: 0,
-              right: 0,
+              right: 0, 
               child: Center(
                 child: Text(
                   'Monitoring Your Security',

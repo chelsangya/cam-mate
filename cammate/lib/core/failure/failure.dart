@@ -1,9 +1,6 @@
 class Failure {
   final String error;
-  final String? statusCode;
+  final int? statusCode;
 
-  Failure({
-    required this.error,
-    this.statusCode,
-  });
+  Failure({required this.error, this.statusCode});
 }

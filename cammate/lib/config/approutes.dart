@@ -13,6 +13,7 @@ class AppRoute {
   static const String userListRoute = '/profile';
   static const String settingsRoute = '/settings';
   static const String splashRoute = '/splash';
+  static const String verifyEmailRoute= '/verifyEmail';
   static getApplicationRoute() {
     return {
       homeRoute: (context) => const PrimaryView(),
@@ -20,7 +21,7 @@ class AppRoute {
       userListRoute: (context) => const UserList(),
       loginRoute: (context) => const LoginView(),
       splashRoute: (context) => const SplashView(),
-
+      verifyEmailRoute: (context) => const PrimaryView(),
     };
   }
 }
