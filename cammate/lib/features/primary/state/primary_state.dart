@@ -1,3 +1,4 @@
+import 'package:cammate/features/auth/presentation/view/profile_view.dart';
 import 'package:cammate/features/primary/view/customer_list.dart';
 import 'package:cammate/features/primary/view/dashboard.dart';
 import 'package:flutter/widgets.dart';
@@ -23,7 +24,7 @@ class PrimaryState {
         const DashboardScreen(),
         const DashboardScreen(),
         const UserList(),
-        const DashboardScreen(),
+        const ProfileView(),
       ];
 
   PrimaryState copyWith({

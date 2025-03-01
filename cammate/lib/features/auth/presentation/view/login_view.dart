@@ -10,7 +10,7 @@ class LoginView extends ConsumerStatefulWidget {
 }
 
 class _LoginViewState extends ConsumerState<LoginView> {
-  bool _rememberMe = false;
+  final bool _rememberMe = false;
   bool _passwordVisible = false;
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
@@ -160,37 +160,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         obscureText: !_passwordVisible,
                       ),
                       const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: <Widget>[
-                          Row(
-                            children: <Widget>[
-                              Checkbox(
-                                side: const BorderSide(color: Colors.black),
-                                checkColor: Colors.white,
-                                value: _rememberMe,
-                                onChanged: (value) {
-                                  setState(() {
-                                    _rememberMe = value!;
-                                  });
-                                },
-                              ),
-                              const Text(
-                                'Remember me',
-                                style: TextStyle(color: Colors.black),
-                              ),
-                            ],
-                          ),
-                          const Spacer(),
-                          TextButton(
-                            onPressed: () {},
-                            child: const Text(
-                              'Forgot password?',
-                              style: TextStyle(color: Colors.red),
-                            ),
-                          ),
-                        ],
-                      ),
+
                       SizedBox(height: 20),
                       SizedBox(
                         width: 400,
@@ -225,27 +195,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         ),
                       ),
                       const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: <Widget>[
-                          const Text(
-                            'Don\'t have an account?',
-                            style: TextStyle(color: Colors.black, fontSize: 17),
-                          ),
-                          TextButton(
-                            onPressed: () {
-                              // Navigator.of(context).pushNamed('/register');
-                            },
-                            child: Text(
-                              'Register',
-                              style: TextStyle(
-                                color: Colors.blue[900],
-                                fontSize: 18,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
                     ],
                   ),
                 ],

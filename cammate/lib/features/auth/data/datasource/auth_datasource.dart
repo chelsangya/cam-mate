@@ -30,8 +30,8 @@ class AuthRemoteDataSource {
         ApiEndpoints.register,
         data: authAPIModel.toJson(),
       );
-      if (response.statusCode == 200) {
-        String message = response.data['message'];
+      if (response.data['status'] == 200) {
+        String message = response.data['data']['message'];
         return Right(message);
       } else {
         return Left(
@@ -57,8 +57,8 @@ class AuthRemoteDataSource {
         ApiEndpoints.verifyEmail,
         data: {"email": email, "otp": otp},
       );
-      if (response.statusCode == 200) {
-        String message = response.data['message'];
+      if (response.data['status'] == 200) {
+        String message = response.data['data']['message'];
         return Right(message);
       } else {
         return Left(
@@ -90,16 +90,13 @@ class AuthRemoteDataSource {
         data: data,
         options: Options(headers: {'Content-Type': 'application/json'}),
       );
-      print('RESPONSE::: ${response.data}');
       if (response.data['status'] == 200) {
         String token = response.data['access'];
         String message = response.data['data']['message'];
         userSharedPrefs.setUserToken(token);
+        userSharedPrefs.setUser(response.data['data']['user']);
         return Right(message);
       } else {
-        print('DIO FAILURE:: ${response.data['data']['error']}');
-        var error = response.data['data']['error'];
-        print('ELSE ERROR:: $error');
         return Left(
           Failure(
             error: response.data['data']['error'],
@@ -108,10 +105,9 @@ class AuthRemoteDataSource {
         );
       }
     } on DioException catch (e) {
-      print('DIO EXCEPTIONN:: $e');
       return Left(
         Failure(
-          error: 'DATA SOURCE EXCEPTION ${e.error.toString()}',
+          error: e.error.toString(),
           statusCode: e.response?.data['status'] ?? 0,
         ),
       );
@@ -137,8 +133,8 @@ class AuthRemoteDataSource {
         },
       );
 
-      if (response.statusCode == 200) {
-        String message = response.data['message'];
+      if (response.data['status'] == 200) {
+        String message = response.data['data']['message'];
         return Right(message);
       } else {
         return Left(
@@ -170,8 +166,8 @@ class AuthRemoteDataSource {
         data: {"currentPassword": currentPassword, "newPassword": newPassword},
       );
 
-      if (response.statusCode == 200) {
-        String message = response.data['message'];
+      if (response.data['status'] == 200) {
+        String message = response.data['data']['message'];
         return Right(message);
       } else {
         return Left(
@@ -207,8 +203,8 @@ class AuthRemoteDataSource {
         ApiEndpoints.uploadProfileImage + id,
         data: formData,
       );
-      if (response.statusCode == 200) {
-        String message = response.data['message'];
+      if (response.data['status'] == 200) {
+        String message = response.data['data']['message'];
         return Right(message);
       } else {
         return Left(
@@ -234,8 +230,8 @@ class AuthRemoteDataSource {
         ApiEndpoints.requestOTP,
         data: {"email": email},
       );
-      if (response.statusCode == 200) {
-        String message = response.data['message'];
+      if (response.data['status'] == 200) {
+        String message = response.data['data']['message'];
         return Right(message);
       } else {
         return Left(
@@ -265,8 +261,8 @@ class AuthRemoteDataSource {
         ApiEndpoints.resetPassword,
         data: {"email": email, "otp": otp, "newPassword": password},
       );
-      if (response.statusCode == 200) {
-        String message = response.data['message'];
+      if (response.data['status'] == 200) {
+        String message = response.data['data']['message'];
         return Right(message);
       } else {
         return Left(
@@ -293,7 +289,7 @@ class AuthRemoteDataSource {
 
       final response = await dio.get(ApiEndpoints.getUserById + id);
 
-      if (response.statusCode == 200) {
+      if (response.data['status'] == 200) {
         final getUserDetailDTO = GetUserDetailDTO.fromJson(response.data);
 
         final userDetail = getUserDetailDTO.userDetail;
