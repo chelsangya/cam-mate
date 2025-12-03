@@ -90,6 +90,7 @@ class AuthRemoteDataSource {
         String token = response.data['access_token'];
         userSharedPrefs.setUserToken(token);
         userSharedPrefs.setUser({'username': username, 'password': password});
+
         return Right('Login successful');
       } else {
         return Left(
@@ -144,29 +145,73 @@ class AuthRemoteDataSource {
   //   }
   // }
 
-  Future<Either<Failure, String>> updateUserPassword(
-    String currentPassword,
-    String newPassword,
-  ) async {
+  Future<Either<Failure, Map<String, dynamic>>> forgotPassword(String email) async {
     try {
-      final userData = await userSharedPrefs.getUser();
-      String? id = userData?['_id']?.toString() ?? '';
-      var response = await dio.put(
-        ApiEndpoints.changePassword + id,
-        data: {"currentPassword": currentPassword, "newPassword": newPassword},
+      // Make POST request with email as query parameter
+      Response response = await dio.post(
+        ApiEndpoints.forgotPassword,
+        queryParameters: {"email": email},
+        options: Options(headers: {'accept': 'application/json'}),
       );
 
-      if (response.data['status'] == 200) {
-        String message = response.data['data']['message'];
-        return Right(message);
+      if (response.statusCode == 200) {
+        // Return the full response map so callers can access message and optional reset_token
+        final respMap =
+            response.data is Map
+                ? Map<String, dynamic>.from(response.data)
+                : {'message': response.data.toString()};
+        // ensure a consistent success flag and preserve reset_token if present
+        final data = <String, dynamic>{
+          'message': respMap['message'] ?? respMap['data']?['message'] ?? respMap.toString(),
+          'success': true,
+        };
+        if (respMap.containsKey('reset_token')) data['reset_token'] = respMap['reset_token'];
+        return Right(data);
       } else {
         return Left(
-          Failure(error: response.data['data']['error'], statusCode: response.data['status']),
+          Failure(
+            error: response.data['detail']?.toString() ?? 'Unknown error',
+            statusCode: response.statusCode ?? 0,
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(Failure(error: e.error.toString(), statusCode: e.response?.statusCode ?? 0));
+    }
+  }
+
+  Future<Either<Failure, Map<String, dynamic>>> changePassword(
+    String currentPassword,
+    newPassword,
+  ) async {
+    try {
+      // POST request with current and new passwords as query parameters
+      Response response = await dio.post(
+        ApiEndpoints.changePassword,
+        queryParameters: {"current_password": currentPassword, "new_password": newPassword},
+        options: Options(headers: {'accept': 'application/json'}),
+      );
+
+      if (response.statusCode == 200) {
+        final data =
+            response.data is Map
+                ? Map<String, dynamic>.from(response.data)
+                : {'message': response.data.toString()};
+        return Right(data);
+      } else {
+        return Left(
+          Failure(
+            error: response.data['detail']?.toString() ?? 'Unknown error',
+            statusCode: response.statusCode ?? 0,
+          ),
         );
       }
     } on DioException catch (e) {
       return Left(
-        Failure(error: e.error.toString(), statusCode: e.response?.data['status'] ?? '0'),
+        Failure(
+          error: e.response?.data['detail']?.toString() ?? e.error.toString(),
+          statusCode: e.response?.statusCode ?? 0,
+        ),
       );
     }
   }
@@ -246,6 +291,39 @@ class AuthRemoteDataSource {
       return Left(
         Failure(error: e.error.toString(), statusCode: e.response?.data['status'] ?? '0'),
       );
+    }
+  }
+
+  /// Reset password using a token (query parameter: token, new_password)
+  Future<Either<Failure, String>> resetPasswordWithToken(String token, String newPassword) async {
+    try {
+      // Some backends expect token and new_password as query parameters (see API docs).
+      Response response = await dio.post(
+        ApiEndpoints.resetPassword,
+        queryParameters: {"token": token, "new_password": newPassword},
+        options: Options(headers: {'accept': 'application/json'}),
+      );
+
+      if (response.statusCode == 200) {
+        // many endpoints return { "message": "..." }
+        String message =
+            response.data['message'] ??
+            response.data['data']?['message'] ??
+            'Password reset successful';
+        return Right(message);
+      } else {
+        return Left(
+          Failure(
+            error:
+                response.data['detail']?.toString() ??
+                response.data['data']?['error']?.toString() ??
+                'Unknown error',
+            statusCode: response.statusCode ?? 0,
+          ),
+        );
+      }
+    } on DioException catch (e) {
+      return Left(Failure(error: e.error.toString(), statusCode: e.response?.statusCode ?? 0));
     }
   }
 

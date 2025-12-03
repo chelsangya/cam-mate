@@ -38,11 +38,8 @@ class AuthUseCase {
   //   return await repository.updateUser(fullName, username, address, number);
   // }
 
-  Future<Either<Failure, String>> updateUserPassword(
-    String currentPassword,
-    String newPassword,
-  ) async {
-    return await repository.updateUserPassword(currentPassword, newPassword);
+  Future<Either<Failure, Map<String, dynamic>>> forgotPassword(String email) async {
+    return await repository.forgotPassword(email);
   }
 
   // Future<Either<Failure, String>> uploadProfilePicture(File? file) async {
@@ -65,6 +62,10 @@ class AuthUseCase {
     String password,
   ) async {
     return await repository.resetPassword(username, otp, password);
+  }
+
+  Future<Either<Failure, String>> resetPasswordWithToken(String token, String newPassword) async {
+    return await repository.resetPasswordWithToken(token, newPassword);
   }
 
   // Future<AuthEntity> getUserById() async {

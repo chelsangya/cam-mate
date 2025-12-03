@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:cammate/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,12 +24,12 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter an username address';
+      return 'Please enter an email address';
     }
     String pattern = r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$';
     RegExp regExp = RegExp(pattern);
     if (!regExp.hasMatch(value)) {
-      return 'Please enter a valid username address';
+      return 'Please enter a valid email address';
     }
     return null;
   }
@@ -43,20 +45,70 @@ class _LoginViewState extends ConsumerState<LoginView> {
     return null;
   }
 
+  void forgotPassword(BuildContext context) {
+    final emailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Reset Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Enter your email to receive password reset instructions.'),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: const InputDecoration(labelText: 'Email', hintText: 'user@gmail.com'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () async {
+                  final email = emailController.text.trim();
+                  final emailError = validateEmail(email);
+                  if (emailError != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(emailError), backgroundColor: Colors.red),
+                    );
+                    return;
+                  }
+                  Navigator.of(ctx).pop();
+                  final val = await ref
+                      .read(authViewModelProvider.notifier)
+                      .forgotPassword(email, context);
+                  if (val != null && val['success'] == true) {
+                    final msg =
+                        val['message'] ?? 'If the email exists, a reset link has been sent.';
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
+                    Future.delayed(const Duration(milliseconds: 300), () {
+                      _showResetWithTokenDialog(context);
+                    });
+                  }
+                },
+                child: const Text('Send'),
+              ),
+            ],
+          ),
+    );
+  }
+
   // Login function
   void login(BuildContext context) {
     final username = usernameController.text;
     final password = passwordController.text;
 
-    final usernameError = validateEmail(username);
     final passwordError = validatePassword(password);
 
-    if (usernameError != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(usernameError), backgroundColor: Colors.red));
-      return;
-    }
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(username), backgroundColor: Colors.red));
 
     if (passwordError != null) {
       ScaffoldMessenger.of(
@@ -67,6 +119,78 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
     ref.read(authViewModelProvider.notifier).loginUser(context, username, password);
     // Navigator.of(context).pushNamed('/');
+  }
+
+  /// Show dialog where user enters the token from email and the new password.
+  void _showResetWithTokenDialog(BuildContext context) {
+    final tokenController = TextEditingController();
+    final newPasswordController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            title: const Text('Complete Password Reset'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Enter the token sent to your email and choose a new password.'),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: tokenController,
+                  decoration: const InputDecoration(
+                    labelText: 'Token',
+                    hintText: 'paste token here',
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: newPasswordController,
+                  obscureText: true,
+                  decoration: const InputDecoration(
+                    labelText: 'New password',
+                    hintText: 'New password',
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+              TextButton(
+                onPressed: () async {
+                  final token = tokenController.text.trim();
+                  final newPassword = newPasswordController.text;
+
+                  if (token.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Please enter the token'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                    return;
+                  }
+
+                  final passwordError = validatePassword(newPassword);
+                  if (passwordError != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(passwordError), backgroundColor: Colors.red),
+                    );
+                    return;
+                  }
+
+                  Navigator.of(ctx).pop();
+
+                  // Call ViewModel to complete reset. The ViewModel handles SnackBars/navigation.
+                  await ref
+                      .read(authViewModelProvider.notifier)
+                      .resetPasswordWithToken(token, newPassword, context);
+                },
+                child: const Text('Reset'),
+              ),
+            ],
+          ),
+    );
   }
 
   @override
@@ -152,7 +276,18 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         obscureText: !_passwordVisible,
                       ),
                       const SizedBox(height: 10),
-
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        children: [
+                          GestureDetector(
+                            onTap: () => forgotPassword(context),
+                            child: const Text(
+                              'Forgot Password',
+                              style: TextStyle(color: Colors.blue),
+                            ),
+                          ),
+                        ],
+                      ),
                       SizedBox(height: 20),
                       SizedBox(
                         width: 400,
@@ -182,6 +317,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
                         ),
                       ),
                       const SizedBox(height: 10),
+
+                      // add reset password link
                     ],
                   ),
                 ],

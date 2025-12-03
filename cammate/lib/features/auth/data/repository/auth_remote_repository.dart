@@ -49,11 +49,20 @@ class AuthRemoteRepoImpl implements IAuthRepository {
   // }
 
   @override
-  Future<Either<Failure, String>> updateUserPassword(
-    String currentPassword,
-    String newPassword,
-  ) async {
-    final result = await authRemoteDataSource.updateUserPassword(currentPassword, newPassword);
+  Future<Either<Failure, Map<String, dynamic>>> forgotPassword(String email) async {
+    final result = await authRemoteDataSource.forgotPassword(email);
+    return result.fold((failure) => Left(failure), (success) => Right(success));
+  }
+
+   @override
+  Future<Either<Failure, Map<String, dynamic>>> changePassword(String currentPassword,newPassword) async {
+    final result = await authRemoteDataSource.changePassword(currentPassword,newPassword);
+    return result.fold((failure) => Left(failure), (success) => Right(success));
+  }
+
+  @override
+  Future<Either<Failure, String>> resetPasswordWithToken(String token, String newPassword) async {
+    final result = await authRemoteDataSource.resetPasswordWithToken(token, newPassword);
     return result.fold((failure) => Left(failure), (success) => Right(success));
   }
 

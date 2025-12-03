@@ -19,7 +19,9 @@ abstract class IAuthRepository {
   //   String address,
   //   String number,
   // );
-  Future<Either<Failure, String>> updateUserPassword(String currentPassword, String newPassword);
+  Future<Either<Failure, Map<String, dynamic>>> forgotPassword(String email);
+  Future<Either<Failure, String>> resetPasswordWithToken(String token, String newPassword);
+  Future<Either<Failure, Map<String, dynamic>>> changePassword(String currentPassword,newpassword);
   // Future<Either<Failure, String>> uploadProfilePicture(File file);
   // Future<Either<Failure, String>> requestOTP(String username);
   Future<Either<Failure, String>> resetPassword(String username, String otp, String password);

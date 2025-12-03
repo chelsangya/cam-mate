@@ -179,14 +179,47 @@ class AuthViewModel extends StateNotifier<AuthState> {
   //   }
   // }
 
-  Future<void> updateUserPassword(
-    String currentPassword,
+  /// Requests a password reset for [email].
+  /// Returns the backend response map on success (may include a `reset_token`).
+  Future<Map<String, dynamic>?> forgotPassword(String email, BuildContext context) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      final result = await authUseCase.forgotPassword(email);
+      state = state.copyWith(isLoading: false);
+      return await result.fold(
+        (failure) async {
+          state = state.copyWith(error: failure.error, isLoading: false, showMessage: true);
+          showMySnackBar(message: state.error!, context: context, color: Colors.red[900]);
+          return null;
+        },
+        (success) async {
+          // success is a Map<String, dynamic>
+          final resp = Map<String, dynamic>.from(success);
+          state = state.copyWith(
+            isLoading: false,
+            message:
+                resp['message']?.toString() ?? 'If the email exists, a reset link has been sent.',
+            showMessage: true,
+            error: null,
+          );
+          showMySnackBar(message: state.message!, context: context);
+          return resp;
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(error: 'Error updating password', isLoading: false, showMessage: true);
+      return null;
+    }
+  }
+
+  Future<void> resetPasswordWithToken(
+    String token,
     String newPassword,
     BuildContext context,
   ) async {
     try {
       state = state.copyWith(isLoading: true);
-      final result = await authUseCase.updateUserPassword(currentPassword, newPassword);
+      final result = await authUseCase.resetPasswordWithToken(token, newPassword);
       state = state.copyWith(isLoading: false);
       result.fold(
         (failure) {
@@ -201,11 +234,16 @@ class AuthViewModel extends StateNotifier<AuthState> {
             error: null,
           );
           showMySnackBar(message: state.message!, context: context);
-          Navigator.pushNamedAndRemoveUntil(context, AppRoute.homeRoute, (route) => false);
+          // After resetting password, route user back to login
+          Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
         },
       );
     } catch (e) {
-      state = state.copyWith(error: 'Error updating password', isLoading: false, showMessage: true);
+      state = state.copyWith(
+        error: 'Error resetting password',
+        isLoading: false,
+        showMessage: true,
+      );
     }
   }
 
