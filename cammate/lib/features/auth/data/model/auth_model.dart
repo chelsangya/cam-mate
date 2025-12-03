@@ -3,17 +3,21 @@ import 'package:json_annotation/json_annotation.dart';
 
 @JsonSerializable()
 class AuthAPIModel {
-  @JsonKey(name: '_id')
-  final String? userId;
+  @JsonKey(name: 'id')
+  final int? userId;
   final String email;
   final String? password;
   final String? role;
   @JsonKey(name: 'is_active')
   final bool? isActive;
-  @JsonKey(name: 'is_staff')
-  final bool? isStaff;
-  @JsonKey(name: 'is_superuser')
-  final bool? isSuperuser;
+  final String? firstName;
+  final String? lastName;
+  final int? martId;
+  final int? createdById;
+  @JsonKey(name: 'created_at')
+  final DateTime? createdAt;
+  @JsonKey(name: 'updated_at')
+  final DateTime? updatedAt;
 
   AuthAPIModel({
     this.userId,
@@ -21,35 +25,46 @@ class AuthAPIModel {
     this.password,
     this.role,
     this.isActive,
-    this.isStaff,
-    this.isSuperuser,
+    this.firstName,
+    this.lastName,
+    this.martId,
+    this.createdById,
+    this.createdAt,
+    this.updatedAt,
   });
 
   factory AuthAPIModel.fromJson(Map<String, dynamic> json) {
     return AuthAPIModel(
-      userId: json['_id'],
+      userId: json['id'],
       email: json['email'],
-      password: json['password'],
+      password: json['hashed_password'],
       role: json['role'],
       isActive: json['is_active'],
-      isStaff: json['is_staff'],
-      isSuperuser: json['is_superuser'],
+      firstName: json['first_name'],
+      lastName: json['last_name'],
+      martId: json['mart_id'],
+      createdById: json['created_by_id'],
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
     );
   }
 
   Map<String, dynamic> toJson({bool includePassword = false}) {
     final data = {
-      '_id': userId,
+      'id': userId,
       'email': email,
       'role': role,
       'is_active': isActive,
-      'is_staff': isStaff,
-      'is_superuser': isSuperuser,
+      'first_name': firstName,
+      'last_name': lastName,
+      'mart_id': martId,
+      'created_by_id': createdById,
+      'created_at': createdAt?.toIso8601String(),
+      'updated_at': updatedAt?.toIso8601String(),
     };
     if (includePassword && password != null) {
-      data['password'] = password;
+      data['hashed_password'] = password;
     }
-
     return data;
   }
 
@@ -60,8 +75,12 @@ class AuthAPIModel {
       password: entity.password,
       role: entity.role,
       isActive: entity.isActive,
-      isStaff: entity.isStaff,
-      isSuperuser: entity.isSuperuser,
+      firstName: entity.firstName,
+      lastName: entity.lastName,
+      martId: entity.martId,
+      createdById: entity.createdById,
+      createdAt: entity.createdAt,
+      updatedAt: entity.updatedAt,
     );
   }
 
@@ -72,8 +91,12 @@ class AuthAPIModel {
       password: model.password,
       role: model.role,
       isActive: model.isActive,
-      isStaff: model.isStaff,
-      isSuperuser: model.isSuperuser,
+      firstName: model.firstName,
+      lastName: model.lastName,
+      martId: model.martId,
+      createdById: model.createdById,
+      createdAt: model.createdAt,
+      updatedAt: model.updatedAt,
     );
   }
 }

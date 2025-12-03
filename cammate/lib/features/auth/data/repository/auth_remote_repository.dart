@@ -1,4 +1,3 @@
-import 'dart:io';
 
 import 'package:cammate/core/failure/failure.dart';
 import 'package:cammate/features/auth/data/datasource/auth_datasource.dart';
@@ -24,11 +23,11 @@ class AuthRemoteRepoImpl implements IAuthRepository {
     return result.fold((failure) => Left(failure), (success) => Right(success));
   }
 
-  @override
-  Future<Either<Failure, String>> verifyEmail(String email, String otp) async {
-    final result = await authRemoteDataSource.verifyEmail(email, otp);
-    return result.fold((failure) => Left(failure), (success) => Right(success));
-  }
+  // @override
+  // Future<Either<Failure, String>> verifyEmail(String email, String otp) async {
+  //   final result = await authRemoteDataSource.verifyEmail(email, otp);
+  //   return result.fold((failure) => Left(failure), (success) => Right(success));
+  // }
 
   @override
   Future<Either<Failure, String>> loginUser(
@@ -39,21 +38,21 @@ class AuthRemoteRepoImpl implements IAuthRepository {
     return result.fold((failure) => Left(failure), (success) => Right(success));
   }
 
-  @override
-  Future<Either<Failure, String>> updateUser(
-    String fullName,
-    String email,
-    String address,
-    String number,
-  ) async {
-    final result = await authRemoteDataSource.updateUser(
-      fullName,
-      email,
-      address,
-      number,
-    );
-    return result.fold((failure) => Left(failure), (success) => Right(success));
-  }
+  // @override
+  // Future<Either<Failure, String>> updateUser(
+  //   String fullName,
+  //   String email,
+  //   String address,
+  //   String number,
+  // ) async {
+  //   final result = await authRemoteDataSource.updateUser(
+  //     fullName,
+  //     email,
+  //     address,
+  //     number,
+  //   );
+  //   return result.fold((failure) => Left(failure), (success) => Right(success));
+  // }
 
   @override
   Future<Either<Failure, String>> updateUserPassword(
@@ -67,17 +66,17 @@ class AuthRemoteRepoImpl implements IAuthRepository {
     return result.fold((failure) => Left(failure), (success) => Right(success));
   }
 
-  @override
-  Future<Either<Failure, String>> uploadProfilePicture(File file) async {
-    final result = await authRemoteDataSource.uploadProfilePicture(file);
-    return result.fold((failure) => Left(failure), (success) => Right(success));
-  }
+  // @override
+  // Future<Either<Failure, String>> uploadProfilePicture(File file) async {
+  //   final result = await authRemoteDataSource.uploadProfilePicture(file);
+  //   return result.fold((failure) => Left(failure), (success) => Right(success));
+  // }
 
-  @override
-  Future<Either<Failure, String>> requestOTP(String email) async {
-    final result = await authRemoteDataSource.requestOTP(email);
-    return result.fold((failure) => Left(failure), (success) => Right(success));
-  }
+  // @override
+  // Future<Either<Failure, String>> requestOTP(String email) async {
+  //   final result = await authRemoteDataSource.requestOTP(email);
+  //   return result.fold((failure) => Left(failure), (success) => Right(success));
+  // }
 
   @override
   Future<Either<Failure, String>> resetPassword(
@@ -93,8 +92,8 @@ class AuthRemoteRepoImpl implements IAuthRepository {
     return result.fold((failure) => Left(failure), (success) => Right(success));
   }
 
-  @override
-  Future<AuthEntity> getUserById() {
-    return authRemoteDataSource.getUserById();
-  }
+  // @override
+  // Future<AuthEntity> getUserById() {
+  //   return authRemoteDataSource.getUserById();
+  // }
 }

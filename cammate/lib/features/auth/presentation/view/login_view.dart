@@ -10,7 +10,6 @@ class LoginView extends ConsumerStatefulWidget {
 }
 
 class _LoginViewState extends ConsumerState<LoginView> {
-  final bool _rememberMe = false;
   bool _passwordVisible = false;
   final emailController = TextEditingController();
   final passwordController = TextEditingController();

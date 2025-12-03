@@ -20,7 +20,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
   AuthViewModel({required this.userSharedPrefs, required this.authUseCase})
     : super(AuthState.initialState()) {
-    getUserById();
+    // getUserById();
   }
 
   Future<void> registerUser(AuthEntity auth, BuildContext context) async {
@@ -65,52 +65,52 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> verifyEmail(
-    BuildContext context,
-    String email,
-    String otp,
-  ) async {
-    try {
-      state = state.copyWith(isLoading: true);
-      final result = await authUseCase.verifyEmail(email, otp);
-      state = state.copyWith(isLoading: false);
+  // Future<void> verifyEmail(
+  //   BuildContext context,
+  //   String email,
+  //   String otp,
+  // ) async {
+  //   try {
+  //     state = state.copyWith(isLoading: true);
+  //     final result = await authUseCase.verifyEmail(email, otp);
+  //     state = state.copyWith(isLoading: false);
 
-      result.fold(
-        (failure) {
-          state = state.copyWith(
-            error: failure.error,
-            isLoading: false,
-            showMessage: true,
-          );
-          showMySnackBar(
-            message: state.error!,
-            context: context,
-            color: Colors.red[900],
-          );
-        },
-        (success) {
-          state = state.copyWith(
-            isLoading: false,
-            message: success,
-            showMessage: true,
-            error: null,
-          );
-          showMySnackBar(message: success, context: context);
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoute.loginRoute,
-            (route) => false,
-          );
-        },
-      );
-    } catch (e) {
-      state = state.copyWith(
-        error: 'Error logging in user',
-        isLoading: false,
-        showMessage: true,
-      );
-    }
-  }
+  //     result.fold(
+  //       (failure) {
+  //         state = state.copyWith(
+  //           error: failure.error,
+  //           isLoading: false,
+  //           showMessage: true,
+  //         );
+  //         showMySnackBar(
+  //           message: state.error!,
+  //           context: context,
+  //           color: Colors.red[900],
+  //         );
+  //       },
+  //       (success) {
+  //         state = state.copyWith(
+  //           isLoading: false,
+  //           message: success,
+  //           showMessage: true,
+  //           error: null,
+  //         );
+  //         showMySnackBar(message: success, context: context);
+  //         Navigator.pushNamedAndRemoveUntil(
+  //           context,
+  //           AppRoute.loginRoute,
+  //           (route) => false,
+  //         );
+  //       },
+  //     );
+  //   } catch (e) {
+  //     state = state.copyWith(
+  //       error: 'Error logging in user',
+  //       isLoading: false,
+  //       showMessage: true,
+  //     );
+  //   }
+  // }
 
   Future<void> loginUser(
     BuildContext context,
@@ -161,59 +161,59 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> updateUser(
-    String fullName,
-    String email,
-    String address,
-    String number,
-    BuildContext context,
-  ) async {
-    try {
-      state = state.copyWith(isLoading: true);
-      final result = await authUseCase.updateUser(
-        fullName,
-        email,
-        address,
-        number,
-      );
-      state = state.copyWith(isLoading: false);
-      result.fold(
-        (failure) {
-          state = state.copyWith(
-            error: failure.error,
-            isLoading: false,
-            showMessage: true,
-          );
-          showMySnackBar(
-            message: state.error!,
-            context: context,
-            color: Colors.red[900],
-          );
-        },
-        (success) {
-          state = state.copyWith(
-            isLoading: false,
-            message: success,
-            showMessage: true,
-            error: null,
-          );
-          getUserById();
-          showMySnackBar(message: state.message!, context: context);
-          Navigator.pushNamedAndRemoveUntil(
-            context,
-            AppRoute.homeRoute,
-            (route) => false,
-          );
-        },
-      );
-    } catch (e) {
-      state = state.copyWith(
-        error: 'Error updating',
-        isLoading: false,
-        showMessage: true,
-      );
-    }
-  }
+  // Future<void> updateUser(
+  //   String fullName,
+  //   String email,
+  //   String address,
+  //   String number,
+  //   BuildContext context,
+  // ) async {
+  //   try {
+  //     state = state.copyWith(isLoading: true);
+  //     final result = await authUseCase.updateUser(
+  //       fullName,
+  //       email,
+  //       address,
+  //       number,
+  //     );
+  //     state = state.copyWith(isLoading: false);
+  //     result.fold(
+  //       (failure) {
+  //         state = state.copyWith(
+  //           error: failure.error,
+  //           isLoading: false,
+  //           showMessage: true,
+  //         );
+  //         showMySnackBar(
+  //           message: state.error!,
+  //           context: context,
+  //           color: Colors.red[900],
+  //         );
+  //       },
+  //       (success) {
+  //         state = state.copyWith(
+  //           isLoading: false,
+  //           message: success,
+  //           showMessage: true,
+  //           error: null,
+  //         );
+  //         getUserById();
+  //         showMySnackBar(message: state.message!, context: context);
+  //         Navigator.pushNamedAndRemoveUntil(
+  //           context,
+  //           AppRoute.homeRoute,
+  //           (route) => false,
+  //         );
+  //       },
+  //     );
+  //   } catch (e) {
+  //     state = state.copyWith(
+  //       error: 'Error updating',
+  //       isLoading: false,
+  //       showMessage: true,
+  //     );
+  //   }
+  // }
 
   Future<void> updateUserPassword(
     String currentPassword,
@@ -264,13 +264,13 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
-  Future<void> getUserById() async {
-    state = state.copyWith(isLoading: true);
+  // Future<void> getUserById() async {
+  //   state = state.copyWith(isLoading: true);
 
-    final result = await authUseCase.getUserById();
+  //   final result = await authUseCase.getUserById();
 
-    state = state.copyWith(userDetail: result, isLoading: false);
-  }
+  //   state = state.copyWith(userDetail: result, isLoading: false);
+  // }
 
   void logout(BuildContext context) async {
     state = state.copyWith(isLoading: true);
