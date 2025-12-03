@@ -1,4 +1,3 @@
-// Clean, single mobile-first login screen (gradient background + translucent form).
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:cammate/features/auth/presentation/view_model/auth_view_model.dart';
@@ -49,6 +48,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       context: context,
       builder:
           (ctx) => AlertDialog(
+            backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
             actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -141,6 +141,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
       context: context,
       builder:
           (ctx) => AlertDialog(
+            backgroundColor: Colors.white,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
             contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
             actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
