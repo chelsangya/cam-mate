@@ -46,6 +46,7 @@ dependencies:
   pretty_dio_logger: ^1.4.0
   build_runner: ^2.4.15
   json_serializable: ^6.9.4
+  jwt_decoder: ^2.0.1
 
 dev_dependencies:
   flutter_test:
