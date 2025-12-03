@@ -1,3 +1,4 @@
+// Clean, single mobile-first login screen (gradient background + translucent form).
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:cammate/features/auth/presentation/view_model/auth_view_model.dart';
@@ -15,6 +16,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
   bool _passwordVisible = false;
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+  final _formKey = GlobalKey<FormState>();
 
   void _togglePasswordVisibility() {
     setState(() {
@@ -23,105 +25,22 @@ class _LoginViewState extends ConsumerState<LoginView> {
   }
 
   String? validateEmail(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter an email address';
-    }
-    String pattern = r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$';
-    RegExp regExp = RegExp(pattern);
-    if (!regExp.hasMatch(value)) {
-      return 'Please enter a valid email address';
-    }
+    if (value == null || value.trim().isEmpty) return 'Please enter an email address';
+    final v = value.trim();
+    // simple, permissive email regex: local@domain.tld (allows dots, dashes, underscores)
+    const pattern = r'^[\w\.-]+@([\w-]+\.)+[\w-]{2,4}$';
+    final regExp = RegExp(pattern);
+    if (!regExp.hasMatch(v)) return 'Please enter a valid email address';
     return null;
   }
 
   String? validatePassword(String? value) {
-    if (value == null || value.isEmpty) {
-      return 'Please enter a password';
-    } else if (value.length < 3) {
-      return 'Password cannot be less than 3 characters';
-    } else if (value.length > 15) {
-      return 'Password cannot be more than 15 characters';
-    }
+    if (value == null || value.isEmpty) return 'Please enter a password';
+    if (value.length < 3) return 'Password cannot be less than 3 characters';
+    if (value.length > 15) return 'Password cannot be more than 15 characters';
     return null;
   }
 
-  void forgotPassword(BuildContext context) {
-    final emailController = TextEditingController();
-
-    showDialog(
-      context: context,
-      builder:
-          (ctx) => AlertDialog(
-            title: const Text('Reset Password'),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text('Enter your email to receive password reset instructions.'),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: emailController,
-                  keyboardType: TextInputType.emailAddress,
-                  decoration: const InputDecoration(labelText: 'Email', hintText: 'user@gmail.com'),
-                ),
-              ],
-            ),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-              TextButton(
-                onPressed: () async {
-                  final email = emailController.text.trim();
-                  final emailError = validateEmail(email);
-                  if (emailError != null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text(emailError), backgroundColor: Colors.red),
-                    );
-                    return;
-                  }
-                  Navigator.of(ctx).pop();
-                  final val = await ref
-                      .read(authViewModelProvider.notifier)
-                      .forgotPassword(email, context);
-                  if (val != null && val['success'] == true) {
-                    final msg =
-                        val['message'] ?? 'If the email exists, a reset link has been sent.';
-                    ScaffoldMessenger.of(
-                      context,
-                    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
-                    Future.delayed(const Duration(milliseconds: 300), () {
-                      _showResetWithTokenDialog(context);
-                    });
-                  }
-                },
-                child: const Text('Send'),
-              ),
-            ],
-          ),
-    );
-  }
-
-  // Login function
-  void login(BuildContext context) {
-    final username = usernameController.text;
-    final password = passwordController.text;
-
-    final passwordError = validatePassword(password);
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(username), backgroundColor: Colors.red));
-
-    if (passwordError != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(passwordError), backgroundColor: Colors.red));
-      return;
-    }
-
-    ref.read(authViewModelProvider.notifier).loginUser(context, username, password);
-    // Navigator.of(context).pushNamed('/');
-  }
-
-  /// Show dialog where user enters the token from email and the new password.
   void _showResetWithTokenDialog(BuildContext context) {
     final tokenController = TextEditingController();
     final newPasswordController = TextEditingController();
@@ -130,6 +49,9 @@ class _LoginViewState extends ConsumerState<LoginView> {
       context: context,
       builder:
           (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             title: const Text('Complete Password Reset'),
             content: Column(
               mainAxisSize: MainAxisSize.min,
@@ -138,25 +60,39 @@ class _LoginViewState extends ConsumerState<LoginView> {
                 const SizedBox(height: 12),
                 TextField(
                   controller: tokenController,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'Token',
                     hintText: 'paste token here',
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: newPasswordController,
                   obscureText: true,
-                  decoration: const InputDecoration(
+                  decoration: InputDecoration(
                     labelText: 'New password',
                     hintText: 'New password',
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
                   ),
                 ),
               ],
             ),
             actions: [
               TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
-              TextButton(
+              ElevatedButton(
                 onPressed: () async {
                   final token = tokenController.text.trim();
                   final newPassword = newPasswordController.text;
@@ -181,11 +117,16 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
                   Navigator.of(ctx).pop();
 
-                  // Call ViewModel to complete reset. The ViewModel handles SnackBars/navigation.
                   await ref
                       .read(authViewModelProvider.notifier)
                       .resetPasswordWithToken(token, newPassword, context);
                 },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0B5FFF),
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                ),
                 child: const Text('Reset'),
               ),
             ],
@@ -193,139 +134,266 @@ class _LoginViewState extends ConsumerState<LoginView> {
     );
   }
 
+  void forgotPassword(BuildContext context) {
+    final emailController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder:
+          (ctx) => AlertDialog(
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            title: const Text('Reset Password'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('Enter your email to receive password reset instructions.'),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    labelText: 'Email',
+                    hintText: 'user@gmail.com',
+                    filled: true,
+                    fillColor: Colors.grey.shade100,
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(30),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Cancel')),
+              ElevatedButton(
+                onPressed: () async {
+                  final email = emailController.text.trim();
+                  final emailError = validateEmail(email);
+                  if (emailError != null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(emailError), backgroundColor: Colors.red),
+                    );
+                    return;
+                  }
+
+                  Navigator.of(ctx).pop();
+
+                  final val = await ref
+                      .read(authViewModelProvider.notifier)
+                      .forgotPassword(email, context);
+                  if (val != null && val['success'] == true) {
+                    final msg =
+                        val['message']?.toString() ??
+                        'If the email exists, a reset link has been sent.';
+                    ScaffoldMessenger.of(
+                      context,
+                    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
+                    Future.delayed(
+                      const Duration(milliseconds: 300),
+                      () => _showResetWithTokenDialog(context),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFF0B5FFF),
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                ),
+                child: const Text('Send'),
+              ),
+            ],
+          ),
+    );
+  }
+
+  // Login function
+  void login(BuildContext context) {
+    final username = usernameController.text;
+    final password = passwordController.text;
+
+    final passwordError = validatePassword(password);
+
+    if (passwordError != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(passwordError), backgroundColor: Colors.red));
+      return;
+    }
+
+    ref.read(authViewModelProvider.notifier).loginUser(context, username, password);
+  }
+
   @override
   Widget build(BuildContext context) {
-    // final authState = ref.watch(authViewModelProvider);
+    final authState = ref.watch(authViewModelProvider);
 
     return Scaffold(
-      // fffbff
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20.0),
+      body: Container(
+        color: const Color(0xFFF5F7FA),
+        child: SafeArea(
+          child: Center(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 28.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.start,
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      width: 320,
-                      height: 150,
-                      color: Colors.black54,
-                    ),
+                  // original app logo (tinted black for better visibility on light background)
+                  Image.asset(
+                    'assets/images/logo.png',
+                    width: 120,
+                    height: 60,
+                    fit: BoxFit.contain,
+                    color: Colors.black,
                   ),
-                  const Text(
-                    'Welcome Back!',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 30,
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(height: 18),
+
+                  // form container (rounded, airy)
+                  Container(
+                    constraints: const BoxConstraints(maxWidth: 420),
+                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(24),
+                      boxShadow: const [
+                        BoxShadow(color: Colors.black12, blurRadius: 20, offset: Offset(0, 8)),
+                      ],
                     ),
-                  ),
-                  const Text(
-                    'Login to your account',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: usernameController,
-                        decoration: const InputDecoration(
-                          labelText: 'Email',
-                          hintText: 'johndoe@gmail.com',
-                          hintStyle: TextStyle(color: Colors.grey),
-                          labelStyle: TextStyle(color: Colors.black),
-                          prefixIcon: Icon(Icons.mail, color: Colors.black),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      TextFormField(
-                        controller: passwordController,
-                        decoration: InputDecoration(
-                          labelText: 'Password',
-                          hintText: '********',
-                          hintStyle: const TextStyle(color: Colors.grey),
-                          labelStyle: const TextStyle(color: Colors.black),
-                          prefixIcon: const Icon(Icons.lock, color: Colors.black),
-                          suffixIcon: IconButton(
-                            icon: Icon(
-                              _passwordVisible ? Icons.visibility : Icons.visibility_off,
-                              color: Colors.black,
-                            ),
-                            onPressed: _togglePasswordVisibility,
-                          ),
-                          border: const OutlineInputBorder(
-                            borderRadius: BorderRadius.all(Radius.circular(10)),
-                          ),
-                        ),
-                        obscureText: !_passwordVisible,
-                      ),
-                      const SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          GestureDetector(
-                            onTap: () => forgotPassword(context),
-                            child: const Text(
-                              'Forgot Password',
-                              style: TextStyle(color: Colors.blue),
+                          const Text(
+                            'Welcome Back',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 6),
+                          const Text(
+                            'Sign in to continue',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 13, color: Colors.black54),
+                          ),
+                          const SizedBox(height: 14),
+
+                          TextFormField(
+                            controller: usernameController,
+                            keyboardType: TextInputType.emailAddress,
+                            validator: validateEmail,
+                            decoration: InputDecoration(
+                              labelText: 'Email',
+                              prefixIcon: const Icon(Icons.mail, color: Color(0xFF0B5FFF)),
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide.none,
+                              ),
                             ),
                           ),
+                          const SizedBox(height: 12),
+
+                          TextFormField(
+                            controller: passwordController,
+                            obscureText: !_passwordVisible,
+                            validator: validatePassword,
+                            decoration: InputDecoration(
+                              labelText: 'Password',
+                              prefixIcon: const Icon(Icons.lock, color: Color(0xFF0B5FFF)),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _passwordVisible ? Icons.visibility : Icons.visibility_off,
+                                  color: Colors.black54,
+                                ),
+                                onPressed: _togglePasswordVisibility,
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(18),
+                                borderSide: BorderSide.none,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: () => forgotPassword(context),
+                              child: const Text(
+                                'Forgot Password?',
+                                style: TextStyle(
+                                  color: Color(0xFF0B5FFF),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          const SizedBox(height: 6),
+
+                          SizedBox(
+                            height: 52,
+                            child: ElevatedButton(
+                              onPressed:
+                                  authState.isLoading
+                                      ? null
+                                      : () {
+                                        if (_formKey.currentState?.validate() ?? false) {
+                                          login(context);
+                                        }
+                                      },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: const Color(0xFF0B5FFF),
+                                foregroundColor: Colors.white,
+                                disabledBackgroundColor: Color(0xFF8FB1FF),
+                                disabledForegroundColor: Colors.white70,
+                                shape: const StadiumBorder(),
+                                elevation: 4,
+                                padding: const EdgeInsets.symmetric(horizontal: 20),
+                                textStyle: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              child:
+                                  authState.isLoading
+                                      ? const SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          color: Colors.white,
+                                          strokeWidth: 2,
+                                        ),
+                                      )
+                                      : const Text('Log in'),
+                            ),
+                          ),
+                          const SizedBox(height: 10),
+                          const SizedBox.shrink(),
                         ],
                       ),
-                      SizedBox(height: 20),
-                      SizedBox(
-                        width: 400,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            login(context);
-                            // ScaffoldMessenger.of(context).showSnackBar(
-                            //   const SnackBar(
-                            //     content: Text('Logging in...'),
-                            //     backgroundColor: Colors.green,
-                            //   ),
-                            // );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF444444),
-                            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                          ),
-                          child: const Text(
-                            'LOGIN',
-                            style: TextStyle(
-                              color: Color(0xFFFFFBFF),
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 10),
-
-                      // add reset password link
-                    ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
