@@ -1,4 +1,3 @@
-
 import 'package:cammate/core/failure/failure.dart';
 import 'package:cammate/core/shared_pref/user_shared_prefs.dart';
 import 'package:cammate/features/auth/domain/entity/auth_entity.dart';
@@ -6,11 +5,12 @@ import 'package:cammate/features/auth/domain/repository/auth_repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-
-final authUseCaseProvider = Provider.autoDispose<AuthUseCase>((ref) =>
-    AuthUseCase(
-        repository: ref.read(authRepositoryProvider),
-        userSharedPrefs: ref.read(userSharedPrefsProvider)));
+final authUseCaseProvider = Provider.autoDispose<AuthUseCase>(
+  (ref) => AuthUseCase(
+    repository: ref.read(authRepositoryProvider),
+    userSharedPrefs: ref.read(userSharedPrefsProvider),
+  ),
+);
 
 class AuthUseCase {
   final IAuthRepository repository;
@@ -23,26 +23,25 @@ class AuthUseCase {
   }
 
   // Future<Either<Failure, String>> verifyEmail(
-  //   String email,
+  //   String username,
   //   String otp,
   // ) async {
-  //   return await repository.verifyEmail(email, otp);
+  //   return await repository.verifyEmail(username, otp);
   // }
 
-  Future<Either<Failure, String>> loginUser(
-    String email,
-    String password,
-  ) async {
-    return await repository.loginUser(email, password);
+  Future<Either<Failure, String>> loginUser(String username, String password) async {
+    return await repository.loginUser(username, password);
   }
 
   // Future<Either<Failure, String>> updateUser(
-  //     String fullName, String email, String address, String number) async {
-  //   return await repository.updateUser(fullName, email, address, number);
+  //     String fullName, String username, String address, String number) async {
+  //   return await repository.updateUser(fullName, username, address, number);
   // }
 
   Future<Either<Failure, String>> updateUserPassword(
-      String currentPassword, String newPassword) async {
+    String currentPassword,
+    String newPassword,
+  ) async {
     return await repository.updateUserPassword(currentPassword, newPassword);
   }
 
@@ -55,14 +54,17 @@ class AuthUseCase {
   // }
 
   // Future<Either<Failure, String>> requestOTP(
-  //   String email,
+  //   String username,
   // ) async {
-  //   return await repository.requestOTP(email);
+  //   return await repository.requestOTP(username);
   // }
 
   Future<Either<Failure, String>> resetPassword(
-      String email, String otp, String password) async {
-    return await repository.resetPassword(email, otp, password);
+    String username,
+    String otp,
+    String password,
+  ) async {
+    return await repository.resetPassword(username, otp, password);
   }
 
   // Future<AuthEntity> getUserById() async {

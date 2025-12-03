@@ -13,7 +13,7 @@ class App extends StatelessWidget {
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: AppRoute.splashRoute,
+      initialRoute: AppRoute.loginRoute,
       routes: AppRoute.getApplicationRoute(),
     );
   }

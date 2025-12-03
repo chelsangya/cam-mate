@@ -24,6 +24,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
     Map<String, dynamic>? userData = await userSharedPrefs.getUser();
     setState(() {
       user = userData;
+      print('User Data: $user');
     });
   }
 
@@ -32,9 +33,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
       context: context,
       builder:
           (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(15),
-            ),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
             title: Row(
               children: [
                 Icon(Icons.logout, color: Colors.red),
@@ -42,17 +41,11 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
               ],
             ),
-            content: Text(
-              'Are you sure you want to log out?',
-              style: TextStyle(fontSize: 16),
-            ),
+            content: Text('Are you sure you want to log out?', style: TextStyle(fontSize: 16)),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
-                child: Text(
-                  'Cancel',
-                  style: TextStyle(color: Colors.grey[700]),
-                ),
+                child: Text('Cancel', style: TextStyle(color: Colors.grey[700])),
               ),
               ElevatedButton(
                 onPressed: () async {
@@ -62,9 +55,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                 ),
                 child: Text('Logout', style: TextStyle(color: Colors.white)),
               ),
@@ -123,43 +114,30 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                             CircleAvatar(
                               radius: 50,
                               backgroundColor: Colors.blueAccent,
-                              child: Icon(
-                                Icons.person,
-                                size: 50,
-                                color: Colors.white,
-                              ),
+                              child: Icon(Icons.person, size: 50, color: Colors.white),
                             ),
                             SizedBox(height: 15),
                             Text(
-                              user!['email'] ?? 'No email',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              user!['username'] ?? 'No username',
+                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                             ),
                             SizedBox(height: 10),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Chip(
-                                  label: Text(
-                                    user!['is_active'] ? 'Active' : 'Inactive',
-                                    style: TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor:
-                                      user!['is_active']
-                                          ? Colors.green
-                                          : Colors.red,
-                                ),
+                                // Chip(
+                                //   label: Text(
+                                //     user!['is_active'] ? 'Active' : 'Inactive',
+                                //     style: TextStyle(color: Colors.white),
+                                //   ),
+                                //   backgroundColor: user!['is_active'] ? Colors.green : Colors.red,
+                                // ),
                                 SizedBox(width: 10),
-                                if (user!['is_superuser'])
-                                  Chip(
-                                    label: Text(
-                                      'Admin',
-                                      style: TextStyle(color: Colors.white),
-                                    ),
-                                    backgroundColor: Colors.blue,
-                                  ),
+                                // if (user!['is_superuser'])
+                                //   Chip(
+                                //     label: Text('Admin', style: TextStyle(color: Colors.white)),
+                                //     backgroundColor: Colors.blue,
+                                //   ),
                               ],
                             ),
                           ],
@@ -168,8 +146,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                     ),
                     SizedBox(height: 20),
                     ElevatedButton.icon(
-                      onPressed:
-                          () => Navigator.pushNamed(context, '/update-profile'),
+                      onPressed: () => Navigator.pushNamed(context, '/update-profile'),
                       icon: Icon(Icons.edit, color: Colors.white),
                       label: Text(
                         'Update Details',
@@ -186,8 +163,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
                     ),
                     SizedBox(height: 20),
                     ElevatedButton.icon(
-                      onPressed:
-                          () => Navigator.pushNamed(context, '/update-profile'),
+                      onPressed: () => Navigator.pushNamed(context, '/update-profile'),
                       icon: Icon(Icons.lock, color: Colors.white),
                       label: Text(
                         'Change Password',

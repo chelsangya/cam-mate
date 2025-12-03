@@ -39,11 +39,11 @@ class AuthRemoteDataSource {
     }
   }
 
-  // Future<Either<Failure, String>> verifyEmail(String email, String otp) async {
+  // Future<Either<Failure, String>> verifyEmail(String username, String otp) async {
   //   try {
   //     Response response = await dio.post(
   //       ApiEndpoints.verifyEmail,
-  //       data: {"email": email, "otp": otp},
+  //       data: {"username": username, "otp": otp},
   //     );
   //     if (response.data['status'] == 200) {
   //       String message = response.data['data']['message'];
@@ -66,11 +66,11 @@ class AuthRemoteDataSource {
   //   }
   // }
 
-  Future<Either<Failure, String>> loginUser(String email, String password) async {
+  Future<Either<Failure, String>> loginUser(String username, String password) async {
     try {
       var formData = FormData.fromMap({
         'grant_type': '',
-        'username': email,
+        'username': username,
         'password': password,
         'scope': '',
         'client_id': '',
@@ -89,7 +89,7 @@ class AuthRemoteDataSource {
         // The backend only returns token info
         String token = response.data['access_token'];
         userSharedPrefs.setUserToken(token);
-
+        userSharedPrefs.setUser({'username': username, 'password': password});
         return Right('Login successful');
       } else {
         return Left(
@@ -106,7 +106,7 @@ class AuthRemoteDataSource {
 
   // Future<Either<Failure, String>> updateUser(
   //   String fullName,
-  //   String email,
+  //   String username,
   //   String address,
   //   String number,
   // ) async {
@@ -117,7 +117,7 @@ class AuthRemoteDataSource {
   //       ApiEndpoints.updateUser + id,
   //       data: {
   //         "fullName": fullName,
-  //         "email": email,
+  //         "username": username,
   //         "address": address,
   //         "number": number,
   //       },
@@ -197,11 +197,11 @@ class AuthRemoteDataSource {
   //   }
   // }
 
-  // Future<Either<Failure, String>> requestOTP(String email) async {
+  // Future<Either<Failure, String>> requestOTP(String username) async {
   //   try {
   //     Response response = await dio.post(
   //       ApiEndpoints.requestOTP,
-  //       data: {"email": email},
+  //       data: {"username": username},
   //     );
   //     if (response.data['status'] == 200) {
   //       String message = response.data['data']['message'];
@@ -224,11 +224,15 @@ class AuthRemoteDataSource {
   //   }
   // }
 
-  Future<Either<Failure, String>> resetPassword(String email, String otp, String password) async {
+  Future<Either<Failure, String>> resetPassword(
+    String username,
+    String otp,
+    String password,
+  ) async {
     try {
       Response response = await dio.post(
         ApiEndpoints.resetPassword,
-        data: {"email": email, "otp": otp, "newPassword": password},
+        data: {"username": username, "otp": otp, "newPassword": password},
       );
       if (response.data['status'] == 200) {
         String message = response.data['data']['message'];

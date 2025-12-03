@@ -5,7 +5,7 @@ import 'package:json_annotation/json_annotation.dart';
 class AuthAPIModel {
   @JsonKey(name: 'id')
   final int? userId;
-  final String email;
+  final String username;
   final String? password;
   final String? role;
   @JsonKey(name: 'is_active')
@@ -21,7 +21,7 @@ class AuthAPIModel {
 
   AuthAPIModel({
     this.userId,
-    required this.email,
+    required this.username,
     this.password,
     this.role,
     this.isActive,
@@ -36,7 +36,7 @@ class AuthAPIModel {
   factory AuthAPIModel.fromJson(Map<String, dynamic> json) {
     return AuthAPIModel(
       userId: json['id'],
-      email: json['email'],
+      username: json['username'],
       password: json['hashed_password'],
       role: json['role'],
       isActive: json['is_active'],
@@ -52,7 +52,7 @@ class AuthAPIModel {
   Map<String, dynamic> toJson({bool includePassword = false}) {
     final data = {
       'id': userId,
-      'email': email,
+      'username': username,
       'role': role,
       'is_active': isActive,
       'first_name': firstName,
@@ -71,7 +71,7 @@ class AuthAPIModel {
   factory AuthAPIModel.fromEntity(AuthEntity entity) {
     return AuthAPIModel(
       userId: entity.userId,
-      email: entity.email,
+      username: entity.username,
       password: entity.password,
       role: entity.role,
       isActive: entity.isActive,
@@ -87,7 +87,7 @@ class AuthAPIModel {
   static AuthEntity toEntity(AuthAPIModel model) {
     return AuthEntity(
       userId: model.userId,
-      email: model.email,
+      username: model.username,
       password: model.password,
       role: model.role,
       isActive: model.isActive,

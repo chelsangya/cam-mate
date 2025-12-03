@@ -11,7 +11,7 @@ class LoginView extends ConsumerStatefulWidget {
 
 class _LoginViewState extends ConsumerState<LoginView> {
   bool _passwordVisible = false;
-  final emailController = TextEditingController();
+  final usernameController = TextEditingController();
   final passwordController = TextEditingController();
 
   void _togglePasswordVisibility() {
@@ -22,12 +22,12 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   String? validateEmail(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Please enter an email address';
+      return 'Please enter an username address';
     }
     String pattern = r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$';
     RegExp regExp = RegExp(pattern);
     if (!regExp.hasMatch(value)) {
-      return 'Please enter a valid email address';
+      return 'Please enter a valid username address';
     }
     return null;
   }
@@ -45,29 +45,27 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   // Login function
   void login(BuildContext context) {
-    final email = emailController.text;
+    final username = usernameController.text;
     final password = passwordController.text;
 
-    final emailError = validateEmail(email);
+    final usernameError = validateEmail(username);
     final passwordError = validatePassword(password);
 
-    if (emailError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(emailError), backgroundColor: Colors.red),
-      );
+    if (usernameError != null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(usernameError), backgroundColor: Colors.red));
       return;
     }
 
     if (passwordError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(passwordError), backgroundColor: Colors.red),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(passwordError), backgroundColor: Colors.red));
       return;
     }
 
-    ref
-        .read(authViewModelProvider.notifier)
-        .loginUser(context, email, password);
+    ref.read(authViewModelProvider.notifier).loginUser(context, username, password);
     // Navigator.of(context).pushNamed('/');
   }
 
@@ -119,7 +117,7 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     children: [
                       const SizedBox(height: 20),
                       TextFormField(
-                        controller: emailController,
+                        controller: usernameController,
                         decoration: const InputDecoration(
                           labelText: 'Email',
                           hintText: 'johndoe@gmail.com',
@@ -139,15 +137,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           hintText: '********',
                           hintStyle: const TextStyle(color: Colors.grey),
                           labelStyle: const TextStyle(color: Colors.black),
-                          prefixIcon: const Icon(
-                            Icons.lock,
-                            color: Colors.black,
-                          ),
+                          prefixIcon: const Icon(Icons.lock, color: Colors.black),
                           suffixIcon: IconButton(
                             icon: Icon(
-                              _passwordVisible
-                                  ? Icons.visibility
-                                  : Icons.visibility_off,
+                              _passwordVisible ? Icons.visibility : Icons.visibility_off,
                               color: Colors.black,
                             ),
                             onPressed: _togglePasswordVisibility,
@@ -175,13 +168,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           },
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF444444),
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 50,
-                              vertical: 10,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(15),
-                            ),
+                            padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
                           ),
                           child: const Text(
                             'LOGIN',
