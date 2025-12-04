@@ -1,0 +1,278 @@
+import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
+import 'package:cammate/features/mart/presentation/view/create_mart_view.dart';
+import 'package:cammate/features/mart/presentation/view/mart_detail_view.dart';
+import 'package:cammate/features/mart/presentation/view_model/mart_view_model.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MartsView extends ConsumerStatefulWidget {
+  const MartsView({super.key});
+
+  @override
+  ConsumerState<MartsView> createState() => _MartsViewState();
+}
+
+class _MartsViewState extends ConsumerState<MartsView> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(martViewModelProvider.notifier).fetchAllMarts());
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async => ref.read(martViewModelProvider.notifier).fetchAllMarts();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: const Color(0xFFF6F7F9),
+      appBar: myCustomAppBar(context, 'Marts'),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateMartView()));
+          // refresh after returning in case a new mart was created
+          ref.read(martViewModelProvider.notifier).fetchAllMarts();
+        },
+        tooltip: 'Create Mart',
+        elevation: 4,
+        child: const Icon(Icons.add),
+      ),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+          child: Column(
+            children: [
+              // list + search area (RefreshIndicator will cover the scrollable content)
+              Expanded(
+                child: Consumer(
+                  builder: (context, ref2, _) {
+                    final state = ref2.watch(martViewModelProvider);
+
+                    if (state.isLoading) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+
+                    if (state.error != null) {
+                      return Center(
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20.0),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                state.error!,
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: Colors.red),
+                              ),
+                              const SizedBox(height: 12),
+                              ElevatedButton(
+                                onPressed:
+                                    () => ref.read(martViewModelProvider.notifier).fetchAllMarts(),
+                                child: const Text('Retry'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    }
+
+                    final allMarts = state.marts;
+                    final query = _searchController.text.trim().toLowerCase();
+                    final marts =
+                        query.isEmpty
+                            ? allMarts
+                            : allMarts.where((m) {
+                              final name = m.name.toLowerCase();
+                              final address = (m.address ?? '').toLowerCase();
+                              final description = (m.description ?? '').toLowerCase();
+                              return name.contains(query) ||
+                                  address.contains(query) ||
+                                  description.contains(query);
+                            }).toList();
+
+                    return RefreshIndicator(
+                      onRefresh: _refresh,
+                      child: ListView.builder(
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        itemCount: 1 + (marts.isEmpty ? 1 : marts.length),
+                        itemBuilder: (context, index) {
+                          if (index == 0) {
+                            // Search bar
+                            return Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(12),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                                ),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.search, color: Colors.black45),
+                                    const SizedBox(width: 8),
+                                    Expanded(
+                                      child: TextField(
+                                        controller: _searchController,
+                                        decoration: const InputDecoration(
+                                          hintText: 'Search marts by name or address',
+                                          border: InputBorder.none,
+                                          isDense: true,
+                                        ),
+                                        onChanged: (_) => setState(() {}),
+                                      ),
+                                    ),
+                                    if (_searchController.text.isNotEmpty)
+                                      IconButton(
+                                        onPressed: () => setState(() => _searchController.clear()),
+                                        icon: const Icon(Icons.clear, color: Colors.black45),
+                                      )
+                                    else
+                                      IconButton(
+                                        onPressed:
+                                            () =>
+                                                ref
+                                                    .read(martViewModelProvider.notifier)
+                                                    .fetchAllMarts(),
+                                        icon: const Icon(Icons.refresh, color: Colors.black54),
+                                      ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          }
+
+                          if (marts.isEmpty) {
+                            return Column(
+                              children: const [
+                                SizedBox(height: 40),
+                                Center(
+                                  child: Icon(Icons.storefront, size: 56, color: Colors.black12),
+                                ),
+                                SizedBox(height: 12),
+                                Center(
+                                  child: Text(
+                                    'No marts yet',
+                                    style: TextStyle(color: Colors.black54, fontSize: 16),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }
+
+                          final mart = marts[index - 1];
+
+                          return Container(
+                            margin: const EdgeInsets.symmetric(vertical: 6, horizontal: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(12),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.03),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 1),
+                                ),
+                              ],
+                            ),
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12),
+                              onTap:
+                                  () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => MartDetailView(mart: mart)),
+                                  ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 26,
+                                      backgroundColor: Colors.blue.shade50,
+                                      child: Text(
+                                        (mart.name.isNotEmpty ? mart.name[0].toUpperCase() : '?'),
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w700,
+                                          color: Colors.black87,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            mart.name,
+                                            style: const TextStyle(
+                                              fontSize: 16,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Text(
+                                            mart.address ?? mart.description ?? '',
+                                            style: const TextStyle(color: Colors.black54),
+                                            maxLines: 2,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 6),
+                                          Row(
+                                            children: [
+                                              if ((mart.contactEmail ?? '').isNotEmpty)
+                                                Text(
+                                                  mart.contactEmail ?? '',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.black45,
+                                                  ),
+                                                ),
+                                              const Spacer(),
+                                              Text(
+                                                mart.isActive == true ? 'Active' : 'Inactive',
+                                                style: TextStyle(
+                                                  color:
+                                                      mart.isActive == true
+                                                          ? Colors.green
+                                                          : Colors.red,
+                                                  fontSize: 12,
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    const Icon(Icons.chevron_right, color: Color(0xFF0B2B3D)),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

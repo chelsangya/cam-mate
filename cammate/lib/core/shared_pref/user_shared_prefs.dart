@@ -29,12 +29,12 @@ class UserSharedPrefs {
     }
   }
 
-  Future<Either<Failure, String?>> getUserToken() async {
+ Future<Either<Failure, String?>> getUserToken() async {
     try {
       final token = _sharedPreferences.getString('token');
-      return right(token);
+      return Right(token);
     } catch (e) {
-      return left(Failure(error: e.toString()));
+      return Left(Failure(error: e.toString()));
     }
   }
 

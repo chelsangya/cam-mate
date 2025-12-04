@@ -15,6 +15,7 @@ class SplashView extends StatefulWidget {
 class _SplashViewState extends State<SplashView> with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _animation;
+  final UserSharedPrefs userSharedPrefs = UserSharedPrefs();
   final Dio dio = Dio();
 
   @override
@@ -34,48 +35,52 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
 
   Future<void> _handleNavigation() async {
     String? token;
-    final data = await UserSharedPrefs().getUserToken();
-    if (data.isRight()) {
-      token = data.getOrElse(() => null);
-    }
 
-    if (token == null) {
+    // Get token from shared preferences
+    final tokenResult = await userSharedPrefs.getUserToken();
+    token = tokenResult.fold((_) => null, (t) => t);
+
+    if (token == null || token.isEmpty) {
       _navigateToLogin();
       return;
     }
 
     // Check if token is expired
     if (JwtDecoder.isExpired(token)) {
-      // Try to refresh token
-      final refreshResult = await _refreshToken(token);
-      if (!refreshResult) {
-        _navigateToLogin();
-        return;
-      }
+      _navigateToLogin();
+      // Uncomment if token expiry handling is needed
+      // final newToken = await _refreshToken(token);
+      // if (newToken == null || newToken.isEmpty) {
+      //   _navigateToLogin();
+      //   return;
+      // } else {
+      //   token = newToken; // Set the refreshed token
+      // }
     }
 
     // Token exists and is valid
     _navigateToHome();
   }
 
-  Future<bool> _refreshToken(String expiredToken) async {
+  Future<String?> _refreshToken(String expiredToken) async {
     try {
-      final refreshTokenData = {"refresh_token": expiredToken};
       final response = await dio.post(
         ApiEndpoints.refreshToken,
-        data: refreshTokenData,
+        data: {"refresh_token": expiredToken},
         options: Options(headers: {'Content-Type': 'application/json'}),
       );
 
       if (response.statusCode == 200 && response.data['access_token'] != null) {
-        final newToken = response.data['access_token'];
-        await UserSharedPrefs().setUserToken(newToken);
-        return true;
+        final newToken = response.data['access_token'] as String;
+
+        await userSharedPrefs.setUserToken(newToken);
+
+        return newToken;
       }
-      return false;
+      return null;
     } catch (e) {
       print("Token refresh failed: $e");
-      return false;
+      return null;
     }
   }
 
@@ -84,7 +89,7 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
   }
 
   void _navigateToHome() {
-    Navigator.of(context).pushReplacementNamed(AppRoute.homeRoute);
+    Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
   }
 
   @override

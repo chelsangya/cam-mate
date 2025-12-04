@@ -9,11 +9,11 @@ class App extends StatelessWidget {
     return MaterialApp(
       title: 'Story Stack',
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.yellowAccent),
+        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigoAccent),
         useMaterial3: true,
       ),
       debugShowCheckedModeBanner: false,
-      initialRoute: AppRoute.loginRoute,
+      initialRoute: AppRoute.splashRoute,
       routes: AppRoute.getApplicationRoute(),
     );
   }

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 AppBar myCustomAppBar(BuildContext context, String text) {
-  final bool isDashboardPage = text == 'Project Zero';
-  final bool isLiveView = text == 'Live View';
-  final bool isUserPage = text == 'Customer List';
+  final bool isDashboardPage = text == 'Project Zero' || text == 'Dashboard' || text == 'Marts';
+  final bool isLiveView = text == 'Live View' || text == 'Activity';
+  final bool isUserPage = text == 'Customer List' || text == 'Users';
   final bool isSettingsPage = text == 'Profile Details';
 
   return AppBar(

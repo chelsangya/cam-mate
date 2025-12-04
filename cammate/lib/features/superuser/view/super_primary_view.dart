@@ -1,16 +1,16 @@
-import 'package:cammate/features/primary/view_model/primary_view_model.dart';
+import 'package:cammate/features/superuser/view_model/super_primary_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_snake_navigationbar/flutter_snake_navigationbar.dart';
 
-class PrimaryView extends ConsumerStatefulWidget {
-  const PrimaryView({super.key});
+class SuperPrimaryView extends ConsumerStatefulWidget {
+  const SuperPrimaryView({super.key});
 
   @override
-  ConsumerState<PrimaryView> createState() => _PrimaryViewState();
+  ConsumerState<SuperPrimaryView> createState() => _SuperPrimaryViewState();
 }
 
-class _PrimaryViewState extends ConsumerState<PrimaryView> {
+class _SuperPrimaryViewState extends ConsumerState<SuperPrimaryView> {
   @override
   Widget build(BuildContext context) {
     return Consumer(
@@ -41,8 +41,8 @@ class _PrimaryViewState extends ConsumerState<PrimaryView> {
               ref.read(primaryViewModelProvider.notifier).changeIndex(index);
             },
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.dashboard, size: 28), label: 'Marts'),
-              BottomNavigationBarItem(icon: Icon(Icons.camera, size: 28), label: 'Users'),
+              BottomNavigationBarItem(icon: Icon(Icons.shop, size: 28), label: 'Marts'),
+              BottomNavigationBarItem(icon: Icon(Icons.people, size: 28), label: 'Users'),
               BottomNavigationBarItem(
                 icon: Icon(Icons.calendar_today, size: 28),
                 label: 'Activity',
