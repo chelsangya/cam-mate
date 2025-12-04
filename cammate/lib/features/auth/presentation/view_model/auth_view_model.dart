@@ -116,7 +116,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
           );
           showMySnackBar(message: success, context: context);
           // getUserById();
-          Navigator.pushNamedAndRemoveUntil(context, AppRoute.homeRoute, (route) => false);
+          Navigator.pushNamedAndRemoveUntil(context, AppRoute.superUserHomeRoute, (route) => false);
         },
       );
     } catch (e) {

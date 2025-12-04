@@ -1,8 +1,10 @@
 import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
 import 'package:cammate/features/mart/data/model/mart_model.dart';
+import 'package:cammate/features/mart/presentation/view_model/mart_view_model.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MartDetailView extends StatelessWidget {
+class MartDetailView extends ConsumerWidget {
   final MartAPIModel mart;
   const MartDetailView({super.key, required this.mart});
 
@@ -20,7 +22,7 @@ class MartDetailView extends StatelessWidget {
   }
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
       appBar: myCustomAppBar(context, mart.name),
@@ -52,6 +54,159 @@ class MartDetailView extends StatelessWidget {
                           mart.name,
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                         ),
+                      ),
+                      IconButton(
+                        onPressed: () async {
+                          // open edit dialog
+                          await showDialog<bool>(
+                            context: context,
+                            builder: (ctx) {
+                              final nameController = TextEditingController(text: mart.name);
+                              final descController = TextEditingController(text: mart.description);
+                              final addressController = TextEditingController(text: mart.address);
+                              final emailController = TextEditingController(
+                                text: mart.contactEmail,
+                              );
+                              final phoneController = TextEditingController(
+                                text: mart.contactPhone,
+                              );
+                              bool isActive = mart.isActive ?? true;
+
+                              return StatefulBuilder(
+                                builder: (ctx2, setState2) {
+                                  return AlertDialog(
+                                    title: const Text('Edit Mart'),
+                                    content: SingleChildScrollView(
+                                      child: Column(
+                                        children: [
+                                          TextField(
+                                            controller: nameController,
+                                            decoration: const InputDecoration(labelText: 'Name'),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TextField(
+                                            controller: descController,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Description',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TextField(
+                                            controller: addressController,
+                                            decoration: const InputDecoration(labelText: 'Address'),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TextField(
+                                            controller: emailController,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Contact Email',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TextField(
+                                            controller: phoneController,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Contact Phone',
+                                            ),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              Checkbox(
+                                                value: isActive,
+                                                onChanged:
+                                                    (v) => setState2(() => isActive = v ?? true),
+                                              ),
+                                              const SizedBox(width: 8),
+                                              const Text('Active'),
+                                            ],
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(ctx2, false),
+                                        child: const Text('Cancel'),
+                                      ),
+                                      TextButton(
+                                        onPressed: () async {
+                                          final updated = MartAPIModel(
+                                            id: mart.id,
+                                            name: nameController.text.trim(),
+                                            description:
+                                                descController.text.trim().isEmpty
+                                                    ? null
+                                                    : descController.text.trim(),
+                                            address:
+                                                addressController.text.trim().isEmpty
+                                                    ? null
+                                                    : addressController.text.trim(),
+                                            contactEmail:
+                                                emailController.text.trim().isEmpty
+                                                    ? null
+                                                    : emailController.text.trim(),
+                                            contactPhone:
+                                                phoneController.text.trim().isEmpty
+                                                    ? null
+                                                    : phoneController.text.trim(),
+                                            isActive: isActive,
+                                          );
+
+                                          final success = await ref
+                                              .read(martViewModelProvider.notifier)
+                                              .updateMart(mart.id!, updated, context);
+                                          if (success) {
+                                            Navigator.pop(ctx2, true);
+                                            // close detail view so list will reflect changes (the viewmodel triggers a refresh)
+                                            Navigator.pop(context);
+                                          }
+                                        },
+                                        child: const Text('Save'),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          );
+                        },
+                        icon: const Icon(Icons.edit, color: Colors.blue),
+                      ),
+                      IconButton(
+                        onPressed: () async {
+                          final confirmed = await showDialog<bool>(
+                            context: context,
+                            builder:
+                                (_) => AlertDialog(
+                                  title: const Text('Delete mart'),
+                                  content: Text(
+                                    'Delete "${mart.name}"? This action cannot be undone.',
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, true),
+                                      child: const Text(
+                                        'Delete',
+                                        style: TextStyle(color: Colors.red),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                          );
+
+                          if (confirmed != true) return;
+                          // perform delete and pop back if successful
+                          final success = await ref
+                              .read(martViewModelProvider.notifier)
+                              .deleteMart(mart.id!, context);
+                          if (success) Navigator.pop(context);
+                        },
+                        icon: const Icon(Icons.delete, color: Colors.red),
                       ),
                     ],
                   ),

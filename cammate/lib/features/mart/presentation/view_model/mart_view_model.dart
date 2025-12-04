@@ -54,6 +54,73 @@ class MartViewModel extends StateNotifier<MartState> {
     }
   }
 
+  Future<bool> updateMart(int martId, MartAPIModel mart, BuildContext context) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      final result = await martUseCase.updateMart(martId, mart);
+      state = state.copyWith(isLoading: false);
+      var successFlag = false;
+      result.fold(
+        (failure) {
+          // prefer a friendly fallback message when the backend message is empty
+          final msg = (failure.error.isNotEmpty) ? failure.error : 'Could not update mart. Please try again later.';
+          state = state.copyWith(error: msg, isLoading: false, showMessage: true, message: msg);
+          // UI (MartsView / Detail view) will show the snackbar from state.message
+          successFlag = false;
+        },
+        (updated) {
+          final msg = 'Mart updated';
+          state = state.copyWith(
+            isLoading: false,
+            message: msg,
+            showMessage: true,
+            error: null,
+          );
+          // refresh list
+          Future.microtask(() => fetchAllMarts());
+          successFlag = true;
+        },
+      );
+      return successFlag;
+    } catch (e) {
+      state = state.copyWith(error: 'Error updating mart', isLoading: false, showMessage: true);
+      return false;
+    }
+  }
+
+  Future<bool> deleteMart(int martId, BuildContext context) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      final result = await martUseCase.deleteMart(martId);
+      state = state.copyWith(isLoading: false);
+      var successFlag = false;
+      result.fold(
+        (failure) {
+          final msg = (failure.error.isNotEmpty) ? failure.error : 'Could not delete mart. Please try again later.';
+          state = state.copyWith(error: msg, isLoading: false, showMessage: true, message: msg);
+          // UI will display snackbar from state.message
+          successFlag = false;
+        },
+        (message) {
+          final msg = message;
+          state = state.copyWith(
+            isLoading: false,
+            message: msg,
+            showMessage: true,
+            error: null,
+          );
+          // refresh list
+          Future.microtask(() => fetchAllMarts());
+          successFlag = true;
+        },
+      );
+      return successFlag;
+    } catch (e) {
+      state = state.copyWith(error: 'Error deleting mart', isLoading: false, showMessage: true);
+      return false;
+    }
+  }
+
   // Future<void> verifyEmail(
   //   BuildContext context,
   //   String username,
@@ -108,14 +175,15 @@ class MartViewModel extends StateNotifier<MartState> {
       final result = await martUseCase.getAllMarts(skip: skip, limit: limit);
       result.fold(
         (failure) {
-          state = state.copyWith(isLoading: false, error: failure.error, marts: []);
+          // Preserve existing marts on failure so UI can continue to show cached list.
+          state = state.copyWith(isLoading: false, error: failure.error, showMessage: true, message: failure.error);
         },
         (marts) {
           state = state.copyWith(isLoading: false, error: null, marts: marts);
         },
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Failed to load marts');
+      state = state.copyWith(isLoading: false, error: 'Failed to load marts', showMessage: true, message: 'Failed to load marts');
     }
   }
 

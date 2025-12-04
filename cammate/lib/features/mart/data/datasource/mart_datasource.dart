@@ -163,19 +163,33 @@ class MartRemoteDataSource {
 
   /// Update Mart
   Future<Either<Failure, MartAPIModel>> updateMart(int martId, MartAPIModel mart) async {
+    print('Attempting to update mart with ID: $martId');
+
     final tokenResult = await _getValidToken();
-    return tokenResult.fold((failure) => Left(failure), (token) async {
+
+    return await tokenResult.fold((failure) => Left(failure), (token) async {
+      if (token.isEmpty) {
+        return Left(Failure(error: 'Token not available', statusCode: 401));
+      }
+
       try {
         final response = await dio.put(
-          '${ApiEndpoints.getMart}/$martId',
+          ApiEndpoints.updateMart(martId.toString()), // Use the correct endpoint function
           data: mart.toJson(),
           options: Options(
-            headers: {"accept": "application/json", "Authorization": "Bearer $token"},
+            headers: {
+              "accept": "application/json",
+              "Authorization": "Bearer $token",
+              "Content-Type": "application/json",
+            },
           ),
         );
 
+        print('Response status code: ${response.statusCode}');
+
         if (response.statusCode == 200) {
-          return Right(MartAPIModel.fromJson(response.data as Map<String, dynamic>));
+          final updatedMart = MartAPIModel.fromJson(response.data as Map<String, dynamic>);
+          return Right(updatedMart);
         } else {
           return Left(
             Failure(
@@ -185,35 +199,70 @@ class MartRemoteDataSource {
           );
         }
       } on DioException catch (e) {
-        return Left(Failure(error: e.error.toString(), statusCode: e.response?.statusCode ?? 0));
+        print('DioException caught: ${e.toString()}');
+        return Left(
+          Failure(
+            error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
+            statusCode: e.response?.statusCode ?? 0,
+          ),
+        );
+      } catch (e) {
+        print('General exception caught: ${e.toString()}');
+        return Left(Failure(error: e.toString(), statusCode: 0));
       }
     });
   }
 
-  /// Delete Mart
   Future<Either<Failure, String>> deleteMart(int martId) async {
-    final tokenResult = await _getValidToken();
-    return tokenResult.fold((failure) => Left(failure), (token) async {
+    print('Attempting to delete mart with ID: $martId');
+
+    final tokenResult = await userSharedPrefs.getUserToken();
+
+    return await tokenResult.fold((failure) => Left(failure), (token) async {
+      if (token == null || token.isEmpty) {
+        return Left(Failure(error: 'Token not available', statusCode: 401));
+      }
+
       try {
+        print('Using token: $token');
+
         final response = await dio.delete(
-          '${ApiEndpoints.getMart}/$martId',
+          ApiEndpoints.getMart(martId.toString()),
           options: Options(
             headers: {"accept": "application/json", "Authorization": "Bearer $token"},
           ),
         );
 
+        print('Response status code: ${response.statusCode}');
+        print('Response data: ${response.data}');
+
         if (response.statusCode == 200) {
-          return Right(response.data.toString());
+          // API returns a string, not JSON
+          return Right(response.data?.toString() ?? 'Deleted successfully');
+        } else if (response.statusCode == 422) {
+          final errorMsg =
+              response.data is Map && response.data['detail'] != null
+                  ? response.data['detail'].toString()
+                  : 'Validation error';
+          return Left(Failure(error: errorMsg, statusCode: 422));
         } else {
-          return Left(
-            Failure(
-              error: response.data['detail']?.toString() ?? 'Unknown error',
-              statusCode: response.statusCode ?? 0,
-            ),
-          );
+          final errorMsg =
+              response.data is Map && response.data['detail'] != null
+                  ? response.data['detail'].toString()
+                  : 'Unknown error';
+          return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
         }
       } on DioException catch (e) {
-        return Left(Failure(error: e.error.toString(), statusCode: e.response?.statusCode ?? 0));
+        print('DioException caught: ${e.toString()}');
+        return Left(
+          Failure(
+            error: e.response?.data?.toString() ?? e.message as String,
+            statusCode: e.response?.statusCode ?? 0,
+          ),
+        );
+      } catch (e) {
+        print('General exception caught: ${e.toString()}');
+        return Left(Failure(error: e.toString(), statusCode: 0));
       }
     });
   }
