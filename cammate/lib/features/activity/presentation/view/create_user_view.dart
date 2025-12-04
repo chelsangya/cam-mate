@@ -121,8 +121,9 @@ class _CreateUserViewState extends ConsumerState<CreateUserView> {
                       keyboardType: TextInputType.emailAddress,
                       validator: (v) {
                         if (v == null || v.trim().isEmpty) return 'Email is required';
-                        if (!RegExp(r"^[\w-.]+@([\w-]+\.)+[\w-]{2,4}").hasMatch(v.trim()))
+                        if (!RegExp(r"^[\w-.]+@([\w-]+\.)+[\w-]{2,4}").hasMatch(v.trim())) {
                           return 'Enter a valid email';
+                        }
                         return null;
                       },
                     ),
@@ -139,7 +140,13 @@ class _CreateUserViewState extends ConsumerState<CreateUserView> {
                                 ),
                               )
                               .toList(),
-                      onChanged: (v) => setState(() => _selectedRole = v),
+                      onChanged: (v) => setState(() {
+                        _selectedRole = v;
+                        // If role becomes superuser, clear any mart selection
+                        if ((v ?? '').toLowerCase() == 'superuser') {
+                          _selectedMartId = null;
+                        }
+                      }),
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Role is required' : null,
                     ),
                     const SizedBox(height: 12),

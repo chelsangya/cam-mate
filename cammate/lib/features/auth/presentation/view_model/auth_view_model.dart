@@ -186,8 +186,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
   //   }
   // }
 
-  /// Requests a password reset for [email].
-  /// Returns the backend response map on success (may include a `reset_token`).
   Future<Map<String, dynamic>?> forgotPassword(String email, BuildContext context) async {
     try {
       state = state.copyWith(isLoading: true);
@@ -266,6 +264,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false);
       result.fold(
         (failure) {
+          checkRefresh(context, failure.error);
           final msg =
               (failure.error.isNotEmpty)
                   ? failure.error
@@ -314,6 +313,16 @@ class AuthViewModel extends StateNotifier<AuthState> {
       Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
     });
   }
+      void checkRefresh(BuildContext context, String message) {
+    if (message.contains("Token has expired") ||
+        message.contains("Token expired and refresh failed") ||
+        message.contains("Invalid token")) {
+      // show snackbar
+      showMySnackBar(context: context, message: "The session has expired. Please log in again.");
+      logout(context);
+    }
+  }
+
 
   void resetMessage(bool value) {
     state = state.copyWith(showMessage: false, error: null, isLoading: false);

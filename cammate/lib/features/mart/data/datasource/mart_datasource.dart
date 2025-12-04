@@ -21,7 +21,6 @@ class MartRemoteDataSource {
 
   MartRemoteDataSource({required this.dio, required this.userSharedPrefs});
 
-  /// Helper: Get valid token (refresh if expired)
   Future<Either<Failure, String>> _getValidToken() async {
     final tokenEither = await userSharedPrefs.getUserToken();
     String? token = tokenEither.fold((_) => null, (t) => t);
@@ -31,9 +30,10 @@ class MartRemoteDataSource {
     }
 
     if (JwtDecoder.isExpired(token)) {
-      // Try to refresh token
       final refreshResult = await _refreshToken(token);
       if (refreshResult.isLeft()) {
+        print('Token refresh failed inside datasource mart $refreshResult');
+
         return Left(Failure(error: 'Token expired and refresh failed', statusCode: 401));
       } else {
         token = refreshResult.getOrElse(() => '');
@@ -43,7 +43,6 @@ class MartRemoteDataSource {
     return Right(token);
   }
 
-  /// Refresh token
   Future<Either<Failure, String>> _refreshToken(String expiredToken) async {
     try {
       final response = await dio.post(
@@ -64,7 +63,6 @@ class MartRemoteDataSource {
     }
   }
 
-  /// Create a new Mart
   Future<Either<Failure, MartAPIModel>> createMart(MartAPIModel mart) async {
     final tokenResult = await _getValidToken();
     return tokenResult.fold((failure) => Left(failure), (token) async {
@@ -102,7 +100,6 @@ class MartRemoteDataSource {
     });
   }
 
-  /// Get all Marts
   Future<Either<Failure, List<MartAPIModel>>> getAllMarts({int skip = 0, int limit = 100}) async {
     final tokenResult = await _getValidToken();
     return tokenResult.fold((failure) => Left(failure), (token) async {
@@ -133,7 +130,6 @@ class MartRemoteDataSource {
     });
   }
 
-  /// Get Mart by ID
   Future<Either<Failure, MartAPIModel>> getMartById(int martId) async {
     final tokenResult = await _getValidToken();
     return tokenResult.fold((failure) => Left(failure), (token) async {
@@ -161,7 +157,6 @@ class MartRemoteDataSource {
     });
   }
 
-  /// Update Mart
   Future<Either<Failure, MartAPIModel>> updateMart(int martId, MartAPIModel mart) async {
     print('Attempting to update mart with ID: $martId');
 

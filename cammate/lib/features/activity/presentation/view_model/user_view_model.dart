@@ -3,36 +3,35 @@
 import 'package:cammate/config/approutes.dart';
 import 'package:cammate/core/common/appbar/my_snackbar.dart';
 import 'package:cammate/core/shared_pref/user_shared_prefs.dart';
-import 'package:cammate/features/mart/data/model/mart_model.dart';
-import 'package:cammate/features/mart/domain/usecase/mart_use_case.dart';
-import 'package:cammate/features/mart/presentation/state/mart_state.dart';
+import 'package:cammate/features/user/data/model/user_model.dart';
+import 'package:cammate/features/user/domain/usecase/user_use_case.dart';
+import 'package:cammate/features/user/presentation/state/user_state.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final martViewModelProvider = StateNotifierProvider<MartViewModel, MartState>(
-  (ref) => MartViewModel(
-    martUseCase: ref.read(martUseCaseProvider),
+final userViewModelProvider = StateNotifierProvider<UserViewModel, UserState>(
+  (ref) => UserViewModel(
+    userUseCase: ref.read(userUseCaseProvider),
     userSharedPrefs: ref.read(userSharedPrefsProvider),
   ),
 );
 
-class MartViewModel extends StateNotifier<MartState> {
-  final MartUseCase martUseCase;
+class UserViewModel extends StateNotifier<UserState> {
+  final UserUseCase userUseCase;
   UserSharedPrefs userSharedPrefs;
 
-  MartViewModel({required this.userSharedPrefs, required this.martUseCase})
-    : super(MartState.initialState()) {
+  UserViewModel({required this.userSharedPrefs, required this.userUseCase})
+    : super(UserState.initialState()) {
     // getUserById();
   }
 
-  Future<void> createMart(MartAPIModel mart, BuildContext context) async {
+  Future<void> createUser(UserAPIModel user, BuildContext context, {String? password}) async {
     try {
       state = state.copyWith(isLoading: true);
-      final result = await martUseCase.createMart(mart);
+      final result = await userUseCase.createUser(user, password: password);
       state = state.copyWith(isLoading: false);
       result.fold(
         (failure) {
-          checkRefresh(context, failure.error);
           state = state.copyWith(error: failure.error, isLoading: false, showMessage: true);
           showMySnackBar(message: state.error!, context: context, color: Colors.red[900]);
         },
@@ -44,10 +43,10 @@ class MartViewModel extends StateNotifier<MartState> {
             showMessage: true,
             error: null,
           );
-          showMySnackBar(message: state.message ?? 'Mart created', context: context);
+          showMySnackBar(message: state.message ?? 'User created', context: context);
           Navigator.pop(context); // close create screen
-          // refresh the mart list
-          Future.microtask(() => fetchAllMarts(context));
+          // refresh the user list
+          Future.microtask(() => fetchAllUsers());
         },
       );
     } catch (e) {
@@ -55,67 +54,34 @@ class MartViewModel extends StateNotifier<MartState> {
     }
   }
 
-  Future<bool> updateMart(int martId, MartAPIModel mart, BuildContext context) async {
+  Future<bool> updateUser(int userId, UserAPIModel user, BuildContext context) async {
     try {
       state = state.copyWith(isLoading: true);
-      final result = await martUseCase.updateMart(martId, mart);
+      final result = await userUseCase.updateUser(userId, user);
       state = state.copyWith(isLoading: false);
       var successFlag = false;
       result.fold(
         (failure) {
-          checkRefresh(context, failure.error);
           // prefer a friendly fallback message when the backend message is empty
           final msg =
               (failure.error.isNotEmpty)
                   ? failure.error
-                  : 'Could not update mart. Please try again later.';
+                  : 'Could not update user. Please try again later.';
           state = state.copyWith(error: msg, isLoading: false, showMessage: true, message: msg);
-          // UI (MartsView / Detail view) will show the snackbar from state.message
+          // UI (UsersView / Detail view) will show the snackbar from state.message
           successFlag = false;
         },
         (updated) {
-          final msg = 'Mart updated';
+          final msg = 'User updated';
           state = state.copyWith(isLoading: false, message: msg, showMessage: true, error: null);
           // refresh list
-          Future.microtask(() => fetchAllMarts(context));
+          Future.microtask(() => fetchAllUsers());
           successFlag = true;
         },
       );
       return successFlag;
     } catch (e) {
-      state = state.copyWith(error: 'Error updating mart', isLoading: false, showMessage: true);
-      return false;
-    }
-  }
-
-  Future<bool> deleteMart(int martId, BuildContext context) async {
-    try {
-      state = state.copyWith(isLoading: true);
-      final result = await martUseCase.deleteMart(martId);
-      state = state.copyWith(isLoading: false);
-      var successFlag = false;
-      result.fold(
-        (failure) {
-          checkRefresh(context, failure.error);
-          final msg =
-              (failure.error.isNotEmpty)
-                  ? failure.error
-                  : 'Could not delete mart. Please try again later.';
-          state = state.copyWith(error: msg, isLoading: false, showMessage: true, message: msg);
-          // UI will display snackbar from state.message
-          successFlag = false;
-        },
-        (message) {
-          final msg = message;
-          state = state.copyWith(isLoading: false, message: msg, showMessage: true, error: null);
-          // refresh list
-          Future.microtask(() => fetchAllMarts(context));
-          successFlag = true;
-        },
-      );
-      return successFlag;
-    } catch (e) {
-      state = state.copyWith(error: 'Error deleting mart', isLoading: false, showMessage: true);
+      state = state.copyWith(error: 'Error updating user', isLoading: false, showMessage: true);
       return false;
     }
   }
@@ -127,7 +93,7 @@ class MartViewModel extends StateNotifier<MartState> {
   // ) async {
   //   try {
   //     state = state.copyWith(isLoading: true);
-  //     final result = await martUseCase.verifyEmail(username, otp);
+  //     final result = await userUseCase.verifyEmail(username, otp);
   //     state = state.copyWith(isLoading: false);
 
   //     result.fold(
@@ -167,15 +133,13 @@ class MartViewModel extends StateNotifier<MartState> {
   //   }
   // }
 
-  /// Fetch all marts and update state.marts
-  Future<void> fetchAllMarts(BuildContext context,{int skip = 0, int limit = 100}) async {
+  Future<void> fetchAllUsers({int skip = 0, int limit = 100}) async {
     try {
       state = state.copyWith(isLoading: true, error: null);
-      final result = await martUseCase.getAllMarts(skip: skip, limit: limit);
+      final result = await userUseCase.getAllUsers(skip: skip, limit: limit);
       result.fold(
         (failure) {
-          checkRefresh(context, failure.error);
-          // Preserve existing marts on failure so UI can continue to show cached list.
+          // Preserve existing users on failure so UI can continue to show cached list.
           state = state.copyWith(
             isLoading: false,
             error: failure.error,
@@ -183,16 +147,16 @@ class MartViewModel extends StateNotifier<MartState> {
             message: failure.error,
           );
         },
-        (marts) {
-          state = state.copyWith(isLoading: false, error: null, marts: marts);
+        (users) {
+          state = state.copyWith(isLoading: false, error: null, users: users);
         },
       );
     } catch (e) {
       state = state.copyWith(
         isLoading: false,
-        error: 'Failed to load marts',
+        error: 'Failed to load users',
         showMessage: true,
-        message: 'Failed to load marts',
+        message: 'Failed to load users',
       );
     }
   }
@@ -208,8 +172,7 @@ class MartViewModel extends StateNotifier<MartState> {
       Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
     });
   }
-
-  void checkRefresh(BuildContext context, String message) {
+    void checkRefresh(BuildContext context, String message) {
     if (message.contains("Token has expired") ||
         message.contains("Token expired and refresh failed") ||
         message.contains("Invalid token")) {

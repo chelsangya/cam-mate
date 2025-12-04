@@ -22,7 +22,6 @@ class AuthRemoteDataSource {
 
   AuthRemoteDataSource({required this.dio, required this.userSharedPrefs});
 
-  /// Helper: Get valid token (refresh if expired)
   Future<Either<Failure, String>> _getValidToken() async {
     final tokenEither = await userSharedPrefs.getUserToken();
     String? token = tokenEither.fold((_) => null, (t) => t);
@@ -32,9 +31,9 @@ class AuthRemoteDataSource {
     }
 
     if (JwtDecoder.isExpired(token)) {
-      // Try to refresh token
       final refreshResult = await _refreshToken(token);
       if (refreshResult.isLeft()) {
+        print('Token refresh failed inside datasource auth $refreshResult');
         return Left(Failure(error: 'Token expired and refresh failed', statusCode: 401));
       } else {
         token = refreshResult.getOrElse(() => '');
@@ -44,7 +43,6 @@ class AuthRemoteDataSource {
     return Right(token);
   }
 
-  /// Refresh token
   Future<Either<Failure, String>> _refreshToken(String expiredToken) async {
     try {
       final response = await dio.post(
@@ -54,14 +52,26 @@ class AuthRemoteDataSource {
       );
 
       if (response.statusCode == 200 && response.data['access_token'] != null) {
-        final newToken = response.data['access_token'] as String;
+        final newToken = response.data['access_token'] as String?;
+        if (newToken == null || newToken.isEmpty) {
+          return Left(Failure(error: 'Empty token received during refresh', statusCode: 400));
+        }
+
         await userSharedPrefs.setUserToken(newToken);
         return Right(newToken);
+      } else if (response.statusCode == 403) {
+        // Token is invalid or expired, clear it
+        await userSharedPrefs.deleteUserToken();
+        return Left(
+          Failure(error: 'Refresh token expired or invalid. Please log in again.', statusCode: 403),
+        );
+      } else {
+        final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
+        return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
       }
-
-      return Left(Failure(error: 'Token refresh failed', statusCode: response.statusCode ?? 0));
     } catch (e) {
-      return Left(Failure(error: e.toString()));
+      print('Error during token refresh: $e');
+      return Left(Failure(error: e.toString(), statusCode: 500));
     }
   }
 
@@ -308,10 +318,8 @@ class AuthRemoteDataSource {
     }
   }
 
-  /// Reset password using a token (query parameter: token, new_password)
   Future<Either<Failure, String>> resetPasswordWithToken(String token, String newPassword) async {
     try {
-      // Some backends expect token and new_password as query parameters (see API docs).
       Response response = await dio.post(
         ApiEndpoints.resetPassword,
         queryParameters: {"token": token, "new_password": newPassword},
@@ -319,7 +327,6 @@ class AuthRemoteDataSource {
       );
 
       if (response.statusCode == 200) {
-        // many endpoints return { "message": "..." }
         String message =
             response.data['message'] ??
             response.data['data']?['message'] ??

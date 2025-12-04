@@ -32,6 +32,7 @@ class UserViewModel extends StateNotifier<UserState> {
       state = state.copyWith(isLoading: false);
       result.fold(
         (failure) {
+          checkRefresh(context, failure.error);
           state = state.copyWith(error: failure.error, isLoading: false, showMessage: true);
           showMySnackBar(message: state.error!, context: context, color: Colors.red[900]);
         },
@@ -46,7 +47,7 @@ class UserViewModel extends StateNotifier<UserState> {
           showMySnackBar(message: state.message ?? 'User created', context: context);
           Navigator.pop(context); // close create screen
           // refresh the user list
-          Future.microtask(() => fetchAllUsers());
+          Future.microtask(() => fetchAllUsers(context));
         },
       );
     } catch (e) {
@@ -62,6 +63,7 @@ class UserViewModel extends StateNotifier<UserState> {
       var successFlag = false;
       result.fold(
         (failure) {
+          checkRefresh(context, failure.error);
           // prefer a friendly fallback message when the backend message is empty
           final msg =
               (failure.error.isNotEmpty)
@@ -75,7 +77,7 @@ class UserViewModel extends StateNotifier<UserState> {
           final msg = 'User updated';
           state = state.copyWith(isLoading: false, message: msg, showMessage: true, error: null);
           // refresh list
-          Future.microtask(() => fetchAllUsers());
+          Future.microtask(() => fetchAllUsers(context));
           successFlag = true;
         },
       );
@@ -134,12 +136,13 @@ class UserViewModel extends StateNotifier<UserState> {
   // }
 
   /// Fetch all users and update state.users
-  Future<void> fetchAllUsers({int skip = 0, int limit = 100}) async {
+  Future<void> fetchAllUsers(BuildContext context, {int skip = 0, int limit = 100}) async {
     try {
       state = state.copyWith(isLoading: true, error: null);
       final result = await userUseCase.getAllUsers(skip: skip, limit: limit);
       result.fold(
         (failure) {
+          checkRefresh(context, failure.error);
           // Preserve existing users on failure so UI can continue to show cached list.
           state = state.copyWith(
             isLoading: false,
@@ -164,14 +167,21 @@ class UserViewModel extends StateNotifier<UserState> {
 
   void logout(BuildContext context) async {
     state = state.copyWith(isLoading: true);
-
-    showMySnackBar(message: 'See you soon. Bye!!', context: context);
-
     await userSharedPrefs.deleteUserToken();
     Future.delayed(const Duration(milliseconds: 1000), () {
       state = state.copyWith(isLoading: true);
       Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
     });
+  }
+
+  void checkRefresh(BuildContext context, String message) {
+    if (message.contains("Token has expired") ||
+        message.contains("Token expired and refresh failed") ||
+        message.contains("Invalid token")) {
+      // show snackbar
+      showMySnackBar(context: context, message: "The session has expired. Please log in again.");
+      logout(context);
+    }
   }
 
   void resetMessage(bool value) {

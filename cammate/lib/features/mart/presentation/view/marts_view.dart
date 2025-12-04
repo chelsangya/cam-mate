@@ -18,7 +18,7 @@ class _MartsViewState extends ConsumerState<MartsView> {
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(martViewModelProvider.notifier).fetchAllMarts());
+    Future.microtask(() => ref.read(martViewModelProvider.notifier).fetchAllMarts(context));
   }
 
   @override
@@ -27,7 +27,7 @@ class _MartsViewState extends ConsumerState<MartsView> {
     super.dispose();
   }
 
-  Future<void> _refresh() async => ref.read(martViewModelProvider.notifier).fetchAllMarts();
+  Future<void> _refresh() async => ref.read(martViewModelProvider.notifier).fetchAllMarts(context);
 
   @override
   Widget build(BuildContext context) {
@@ -38,7 +38,7 @@ class _MartsViewState extends ConsumerState<MartsView> {
         onPressed: () async {
           await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateMartView()));
           // refresh after returning in case a new mart was created
-          ref.read(martViewModelProvider.notifier).fetchAllMarts();
+          ref.read(martViewModelProvider.notifier).fetchAllMarts(context);
         },
         tooltip: 'Create Mart',
         elevation: 4,
@@ -128,10 +128,9 @@ class _MartsViewState extends ConsumerState<MartsView> {
                                     else
                                       IconButton(
                                         onPressed:
-                                            () =>
-                                                ref
-                                                    .read(martViewModelProvider.notifier)
-                                                    .fetchAllMarts(),
+                                            () => ref
+                                                .read(martViewModelProvider.notifier)
+                                                .fetchAllMarts(context),
                                         icon: const Icon(Icons.refresh, color: Colors.black54),
                                       ),
                                   ],
