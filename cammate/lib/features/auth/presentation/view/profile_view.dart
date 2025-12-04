@@ -1,5 +1,6 @@
 import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
 import 'package:cammate/core/shared_pref/user_shared_prefs.dart';
+import 'package:cammate/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -13,174 +14,347 @@ class ProfileView extends ConsumerStatefulWidget {
 class _ProfileViewState extends ConsumerState<ProfileView> {
   UserSharedPrefs userSharedPrefs = UserSharedPrefs();
   Map<String, dynamic>? user;
+  String role = "";
 
   @override
   void initState() {
     super.initState();
     getUser();
+    // getUserRole is asynchronous and returns Either<Failure,String?>
+    _loadRole();
   }
 
-  Future<void> getUser() async {
-    Map<String, dynamic>? userData = await userSharedPrefs.getUser();
-    setState(() {
-      user = userData;
-      print('User Data: $user');
-    });
-  }
-
-  Future<void> logout(BuildContext context) async {
-    bool confirmLogout = await showDialog(
+  void _confirmLogout(BuildContext context) {
+    showDialog<void>(
       context: context,
+      barrierDismissible: false,
       builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-            title: Row(
+          (dialogCtx) => AlertDialog(
+            backgroundColor: Colors.white,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+            actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            title: const Text('Confirm Logout'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.logout, color: Colors.red),
-                SizedBox(width: 10),
-                Text('Logout', style: TextStyle(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                Icon(Icons.logout, size: 48, color: Colors.redAccent),
+                const SizedBox(height: 12),
+                const Text('You will be signed out of this device. Continue?'),
               ],
             ),
-            content: Text('Are you sure you want to log out?', style: TextStyle(fontSize: 16)),
             actions: [
               TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: Text('Cancel', style: TextStyle(color: Colors.grey[700])),
+                onPressed: () => Navigator.of(dialogCtx).pop(),
+                child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () async {
-                  await userSharedPrefs.deleteUserToken();
-                  await userSharedPrefs.deleteUser();
-                  Navigator.pop(context, true);
+                onPressed: () {
+                  Navigator.of(dialogCtx).pop();
+                  // call viewmodel logout which handles token removal and navigation
+                  ref.read(authViewModelProvider.notifier).logout(context);
                 },
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  backgroundColor: Colors.redAccent,
+                  foregroundColor: Colors.white,
+                  shape: const StadiumBorder(),
+                  padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
-                child: Text('Logout', style: TextStyle(color: Colors.white)),
+                child: const Text('Logout'),
               ),
             ],
           ),
     );
+  }
 
-    if (confirmLogout == true) {
-      Navigator.pushReplacementNamed(context, '/login');
+  Future<void> _loadRole() async {
+    final res = await userSharedPrefs.getUserRole();
+    // fold Either<Failure, String?> into role (use empty string on failure/null)
+    res.fold((_) => setState(() => role = ''), (r) => setState(() => role = r ?? ''));
+    // cleaned up: build method and getUser inserted below
+  }
+
+  Future<void> getUser() async {
+    final res = await userSharedPrefs.getUser();
+    if (res != null) {
+      setState(() {
+        user = res;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final displayName = user != null ? (user!['full_name'] ?? user!['username'] ?? 'User') : 'User';
+
     return Scaffold(
-      appBar: myCustomAppBar(context, 'Profile Details'),
-      body:
-          user == null
-              ? Center(child: CircularProgressIndicator())
-              : Padding(
-                padding: EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      appBar: myCustomAppBar(context, 'Profile'),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 8),
+              CircleAvatar(
+                radius: 40,
+                backgroundColor: Colors.indigo,
+                child: Text(
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : 'U',
+                  style: const TextStyle(fontSize: 32, color: Colors.white),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Text(displayName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 8),
+              if (role.trim().isNotEmpty)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: _roleColor(role).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: _roleColor(role).withOpacity(0.2)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(Icons.person, size: 16, color: _roleColor(role)),
+                      const SizedBox(width: 8),
+                      Text(
+                        _formatRole(role),
+                        style: TextStyle(
+                          color: _roleColor(role),
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _showChangePasswordDialog(context),
+                  icon: const Icon(Icons.lock, color: Colors.white),
+                  label: const Text(
+                    'Change Password',
+                    style: TextStyle(fontSize: 16, color: Colors.white),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.indigo,
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              SizedBox(
+                width: double.infinity,
+                child: OutlinedButton.icon(
+                  onPressed: () => _confirmLogout(context),
+                  icon: const Icon(Icons.logout, color: Colors.red),
+                  label: const Text('Logout', style: TextStyle(fontSize: 16, color: Colors.red)),
+                  style: OutlinedButton.styleFrom(
+                    side: const BorderSide(color: Colors.redAccent),
+                    minimumSize: const Size(double.infinity, 48),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showChangePasswordDialog(BuildContext parentContext) {
+    final currentController = TextEditingController();
+    final newController = TextEditingController();
+    final confirmController = TextEditingController();
+    final formKey = GlobalKey<FormState>();
+
+    showDialog<void>(
+      context: parentContext,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        // local state
+        bool obscureCurrent = true;
+        bool obscureNew = true;
+        bool obscureConfirm = true;
+        bool isSubmitting = false;
+
+        String? validateCurrent(String? v) =>
+            (v == null || v.trim().isEmpty) ? 'Current password required' : null;
+        String? validateNew(String? v) {
+          if (v == null || v.trim().isEmpty) return 'New password required';
+          if (v.trim().length < 8) return 'Use at least 8 characters';
+          return null;
+        }
+
+        String? validateConfirm(String? v) {
+          if (v == null || v.trim().isEmpty) return 'Please confirm new password';
+          if (v.trim() != newController.text.trim()) return 'Passwords do not match';
+          return null;
+        }
+
+        return StatefulBuilder(
+          builder:
+              (context, setState) => AlertDialog(
+                backgroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                title: const Text('Change Password'),
+                content: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Align(
-                      alignment: Alignment.topRight,
-                      child: IconButton(
-                        color: Colors.red,
-                        icon: Icon(
-                          Icons.logout_outlined,
-                          // color: Colors.red,
-                          size: 30,
-                        ),
-                        onPressed: () => logout(context),
-                        style: ButtonStyle(
-                          shape: WidgetStateProperty.all(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(10),
-                              side: BorderSide(color: Colors.red[300]!),
+                    const Text('Provide your current password and choose a new one.'),
+                    const SizedBox(height: 12),
+                    Form(
+                      key: formKey,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextFormField(
+                            controller: currentController,
+                            obscureText: obscureCurrent,
+                            decoration: InputDecoration(
+                              labelText: 'Current password',
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscureCurrent ? Icons.visibility_off : Icons.visibility,
+                                ),
+                                onPressed: () => setState(() => obscureCurrent = !obscureCurrent),
+                              ),
                             ),
+                            validator: validateCurrent,
+                            textInputAction: TextInputAction.next,
                           ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    Card(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                        side: BorderSide(color: Colors.grey),
-                      ),
-                      elevation: 4,
-                      child: Padding(
-                        padding: EdgeInsets.all(20),
-                        child: Column(
-                          children: [
-                            CircleAvatar(
-                              radius: 50,
-                              backgroundColor: Colors.blueAccent,
-                              child: Icon(Icons.person, size: 50, color: Colors.white),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: newController,
+                            obscureText: obscureNew,
+                            decoration: InputDecoration(
+                              labelText: 'New password',
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(obscureNew ? Icons.visibility_off : Icons.visibility),
+                                onPressed: () => setState(() => obscureNew = !obscureNew),
+                              ),
                             ),
-                            SizedBox(height: 15),
-                            Text(
-                              user!['username'] ?? 'No username',
-                              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            validator: validateNew,
+                            textInputAction: TextInputAction.next,
+                          ),
+                          const SizedBox(height: 12),
+                          TextFormField(
+                            controller: confirmController,
+                            obscureText: obscureConfirm,
+                            decoration: InputDecoration(
+                              labelText: 'Confirm new password',
+                              filled: true,
+                              fillColor: Colors.grey.shade100,
+                              contentPadding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 12,
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(30),
+                                borderSide: BorderSide.none,
+                              ),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  obscureConfirm ? Icons.visibility_off : Icons.visibility,
+                                ),
+                                onPressed: () => setState(() => obscureConfirm = !obscureConfirm),
+                              ),
                             ),
-                            SizedBox(height: 10),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                // Chip(
-                                //   label: Text(
-                                //     user!['is_active'] ? 'Active' : 'Inactive',
-                                //     style: TextStyle(color: Colors.white),
-                                //   ),
-                                //   backgroundColor: user!['is_active'] ? Colors.green : Colors.red,
-                                // ),
-                                SizedBox(width: 10),
-                                // if (user!['is_superuser'])
-                                //   Chip(
-                                //     label: Text('Admin', style: TextStyle(color: Colors.white)),
-                                //     backgroundColor: Colors.blue,
-                                //   ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/update-profile'),
-                      icon: Icon(Icons.edit, color: Colors.white),
-                      label: Text(
-                        'Update Details',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo,
-                        minimumSize: Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: Colors.grey),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                    ElevatedButton.icon(
-                      onPressed: () => Navigator.pushNamed(context, '/update-profile'),
-                      icon: Icon(Icons.lock, color: Colors.white),
-                      label: Text(
-                        'Change Password',
-                        style: TextStyle(fontSize: 18, color: Colors.white),
-                      ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.indigo,
-                        minimumSize: Size(double.infinity, 50),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          side: BorderSide(color: Colors.grey),
-                        ),
+                            validator: validateConfirm,
+                            textInputAction: TextInputAction.done,
+                          ),
+                        ],
                       ),
                     ),
                   ],
                 ),
+                actions: [
+                  TextButton(
+                    onPressed: isSubmitting ? null : () => Navigator.of(dialogContext).pop(),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed:
+                        isSubmitting
+                            ? null
+                            : () async {
+                              final valid = formKey.currentState?.validate() ?? false;
+                              if (!valid) return;
+                              setState(() => isSubmitting = true);
+                              await ref
+                                  .read(authViewModelProvider.notifier)
+                                  .changePassword(
+                                    currentController.text.trim(),
+                                    newController.text.trim(),
+                                    dialogContext,
+                                  );
+                              if (mounted) setState(() => isSubmitting = false);
+                            },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF0B5FFF),
+                      foregroundColor: Colors.white,
+                      shape: const StadiumBorder(),
+                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                    ),
+                    child:
+                        isSubmitting
+                            ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white),
+                            )
+                            : const Text('Change'),
+                  ),
+                ],
               ),
+        );
+      },
     );
+  }
+
+  Color _roleColor(String r) {
+    final key = r.toLowerCase();
+    if (key.contains('admin') || key.contains('super')) return Colors.indigo;
+    if (key.contains('staff')) return Colors.green;
+    if (key.contains('seller') || key.contains('vendor')) return Colors.orange;
+    return Colors.grey.shade600;
+  }
+
+  String _formatRole(String r) {
+    if (r.trim().isEmpty) return '';
+    final parts = r.split(RegExp(r"[ _-]+"));
+    return parts
+        .map((p) => p.isEmpty ? p : '${p[0].toUpperCase()}${p.substring(1).toLowerCase()}')
+        .join(' ');
   }
 }

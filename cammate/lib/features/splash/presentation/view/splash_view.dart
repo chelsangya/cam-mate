@@ -89,6 +89,12 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
   }
 
   void _navigateToHome() {
+    final role = userSharedPrefs.getUserRole();
+    print('User role in splash: $role');
+    if (role == 'superuser' || role == 'SUPERUSER') {
+      Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
+      return;
+    }
     Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
   }
 

@@ -22,53 +22,22 @@ class AuthUseCase {
     return await repository.registerUser(auth);
   }
 
-  // Future<Either<Failure, String>> verifyEmail(
-  //   String username,
-  //   String otp,
-  // ) async {
-  //   return await repository.verifyEmail(username, otp);
-  // }
-
   Future<Either<Failure, String>> loginUser(String username, String password) async {
     return await repository.loginUser(username, password);
   }
 
-  // Future<Either<Failure, String>> updateUser(
-  //     String fullName, String username, String address, String number) async {
-  //   return await repository.updateUser(fullName, username, address, number);
-  // }
-
   Future<Either<Failure, Map<String, dynamic>>> forgotPassword(String email) async {
     return await repository.forgotPassword(email);
-  }
-
-  // Future<Either<Failure, String>> uploadProfilePicture(File? file) async {
-  //   if (file == null) {
-  //     return Left(Failure(error: "File is null"));
-  //   }
-
-  //   return await repository.uploadProfilePicture(file);
-  // }
-
-  // Future<Either<Failure, String>> requestOTP(
-  //   String username,
-  // ) async {
-  //   return await repository.requestOTP(username);
-  // }
-
-  Future<Either<Failure, String>> resetPassword(
-    String username,
-    String otp,
-    String password,
-  ) async {
-    return await repository.resetPassword(username, otp, password);
   }
 
   Future<Either<Failure, String>> resetPasswordWithToken(String token, String newPassword) async {
     return await repository.resetPasswordWithToken(token, newPassword);
   }
 
-  // Future<AuthEntity> getUserById() async {
-  //   return await repository.getUserById();
-  // }
+  Future<Either<Failure, Map<String, dynamic>>> changePassword(
+    String currentPassword,
+    String newPassword,
+  ) async {
+    return await repository.changePassword(currentPassword, newPassword);
+  }
 }

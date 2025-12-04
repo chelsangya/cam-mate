@@ -66,30 +66,4 @@ class AuthRemoteRepoImpl implements IAuthRepository {
     return result.fold((failure) => Left(failure), (success) => Right(success));
   }
 
-  // @override
-  // Future<Either<Failure, String>> uploadProfilePicture(File file) async {
-  //   final result = await authRemoteDataSource.uploadProfilePicture(file);
-  //   return result.fold((failure) => Left(failure), (success) => Right(success));
-  // }
-
-  // @override
-  // Future<Either<Failure, String>> requestOTP(String username) async {
-  //   final result = await authRemoteDataSource.requestOTP(username);
-  //   return result.fold((failure) => Left(failure), (success) => Right(success));
-  // }
-
-  @override
-  Future<Either<Failure, String>> resetPassword(
-    String username,
-    String otp,
-    String password,
-  ) async {
-    final result = await authRemoteDataSource.resetPassword(username, otp, password);
-    return result.fold((failure) => Left(failure), (success) => Right(success));
-  }
-
-  // @override
-  // Future<AuthEntity> getUserById() {
-  //   return authRemoteDataSource.getUserById();
-  // }
 }

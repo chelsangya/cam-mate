@@ -7,6 +7,7 @@ import 'package:cammate/features/auth/domain/entity/auth_entity.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 final authRemoteDataSourceProvider = Provider.autoDispose<AuthRemoteDataSource>(
   (ref) => AuthRemoteDataSource(
@@ -20,6 +21,50 @@ class AuthRemoteDataSource {
   UserSharedPrefs userSharedPrefs;
 
   AuthRemoteDataSource({required this.dio, required this.userSharedPrefs});
+
+  /// Helper: Get valid token (refresh if expired)
+  Future<Either<Failure, String>> _getValidToken() async {
+    final tokenEither = await userSharedPrefs.getUserToken();
+    String? token = tokenEither.fold((_) => null, (t) => t);
+
+    if (token == null || token.isEmpty) {
+      return Left(Failure(error: 'User is not authenticated', statusCode: 401));
+    }
+
+    if (JwtDecoder.isExpired(token)) {
+      // Try to refresh token
+      final refreshResult = await _refreshToken(token);
+      if (refreshResult.isLeft()) {
+        return Left(Failure(error: 'Token expired and refresh failed', statusCode: 401));
+      } else {
+        token = refreshResult.getOrElse(() => '');
+      }
+    }
+
+    return Right(token);
+  }
+
+  /// Refresh token
+  Future<Either<Failure, String>> _refreshToken(String expiredToken) async {
+    try {
+      final response = await dio.post(
+        ApiEndpoints.refreshToken,
+        data: {"refresh_token": expiredToken},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+
+      if (response.statusCode == 200 && response.data['access_token'] != null) {
+        final newToken = response.data['access_token'] as String;
+        await userSharedPrefs.setUserToken(newToken);
+        return Right(newToken);
+      }
+
+      return Left(Failure(error: 'Token refresh failed', statusCode: response.statusCode ?? 0));
+    } catch (e) {
+      return Left(Failure(error: e.toString()));
+    }
+  }
+
   Future<Either<Failure, String>> registerUser(AuthEntity auth) async {
     try {
       AuthAPIModel authAPIModel = AuthAPIModel.fromEntity(auth);
@@ -89,7 +134,10 @@ class AuthRemoteDataSource {
         // The backend only returns token info
         String token = response.data['access_token'];
         userSharedPrefs.setUserToken(token);
-        userSharedPrefs.setUser({'username': username, 'password': password});
+        final user = {'username': username, 'password': password, 'role': 'superuser'};
+        final role = user['role'];
+        userSharedPrefs.setUserRole(role as String);
+        userSharedPrefs.setUser(user);
 
         return Right('Login successful');
       } else {
@@ -182,92 +230,58 @@ class AuthRemoteDataSource {
 
   Future<Either<Failure, Map<String, dynamic>>> changePassword(
     String currentPassword,
-    newPassword,
+    String newPassword,
   ) async {
     try {
-      // POST request with current and new passwords as query parameters
-      Response response = await dio.post(
-        ApiEndpoints.changePassword,
-        queryParameters: {"current_password": currentPassword, "new_password": newPassword},
-        options: Options(headers: {'accept': 'application/json'}),
-      );
+      // Get the user token
+      final tokenResult = await _getValidToken();
 
-      if (response.statusCode == 200) {
-        final data =
-            response.data is Map
-                ? Map<String, dynamic>.from(response.data)
-                : {'message': response.data.toString()};
-        return Right(data);
-      } else {
-        return Left(
-          Failure(
-            error: response.data['detail']?.toString() ?? 'Unknown error',
-            statusCode: response.statusCode ?? 0,
+      return await tokenResult.fold((failure) => Left(failure), (token) async {
+        if (token.isEmpty) {
+          return Left(Failure(error: 'Token not available', statusCode: 401));
+        }
+
+        // Make POST request with query parameters
+        final response = await dio.post(
+          ApiEndpoints.changePassword,
+          queryParameters: {"current_password": currentPassword, "new_password": newPassword},
+          options: Options(
+            headers: {"accept": "application/json", "Authorization": "Bearer $token"},
           ),
         );
-      }
+
+        if (response.statusCode == 200) {
+          final data =
+              response.data is Map
+                  ? Map<String, dynamic>.from(response.data)
+                  : {"message": response.data.toString()};
+          return Right(data);
+        } else if (response.statusCode == 422) {
+          final errorMsg =
+              response.data['detail'] != null
+                  ? response.data['detail'].toString()
+                  : 'Validation error';
+          return Left(Failure(error: errorMsg, statusCode: 422));
+        } else {
+          return Left(
+            Failure(
+              error: response.data['detail']?.toString() ?? 'Unknown error',
+              statusCode: response.statusCode ?? 0,
+            ),
+          );
+        }
+      });
     } on DioException catch (e) {
       return Left(
         Failure(
-          error: e.response?.data['detail']?.toString() ?? e.error.toString(),
+          error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
           statusCode: e.response?.statusCode ?? 0,
         ),
       );
+    } catch (e) {
+      return Left(Failure(error: e.toString(), statusCode: 0));
     }
   }
-
-  // Future<Either<Failure, String>> uploadProfilePicture(File? image) async {
-  //   try {
-  //     if (image == null) {
-  //       return Left(Failure(error: "Image file is null"));
-  //     }
-
-  //     final userData = await userSharedPrefs.getUser();
-  //     String? id = userData?['_id']?.toString() ?? '';
-  //     FormData formData = FormData.fromMap({'userImage': await MultipartFile.fromFile(image.path)});
-
-  //     Response response = await dio.put(ApiEndpoints.uploadProfileImage + id, data: formData);
-  //     if (response.data['status'] == 200) {
-  //       String message = response.data['data']['message'];
-  //       return Right(message);
-  //     } else {
-  //       return Left(
-  //         Failure(error: response.data['data']['error'], statusCode: response.data['status']),
-  //       );
-  //     }
-  //   } on DioException catch (e) {
-  //     return Left(
-  //       Failure(error: e.error.toString(), statusCode: e.response?.data['status'] ?? '0'),
-  //     );
-  //   }
-  // }
-
-  // Future<Either<Failure, String>> requestOTP(String username) async {
-  //   try {
-  //     Response response = await dio.post(
-  //       ApiEndpoints.requestOTP,
-  //       data: {"username": username},
-  //     );
-  //     if (response.data['status'] == 200) {
-  //       String message = response.data['data']['message'];
-  //       return Right(message);
-  //     } else {
-  //       return Left(
-  //         Failure(
-  //           error: response.data['data']['error'],
-  //           statusCode: response.data['status'],
-  //         ),
-  //       );
-  //     }
-  //   } on DioException catch (e) {
-  //     return Left(
-  //       Failure(
-  //         error: e.error.toString(),
-  //         statusCode: e.response?.data['status'] ?? '0',
-  //       ),
-  //     );
-  //   }
-  // }
 
   Future<Either<Failure, String>> resetPassword(
     String username,
@@ -326,30 +340,4 @@ class AuthRemoteDataSource {
       return Left(Failure(error: e.error.toString(), statusCode: e.response?.statusCode ?? 0));
     }
   }
-
-  // Future<AuthEntity> getUserById() async {
-  //   try {
-  //     final userData = await userSharedPrefs.getUser();
-  //     String? id = userData?['_id']?.toString() ?? '';
-
-  //     final response = await dio.get(ApiEndpoints.getUserById + id);
-
-  //     if (response.data['status'] == 200) {
-  //       final getUserDetailDTO = GetUserDetailDTO.fromJson(response.data);
-
-  //       final userDetail = getUserDetailDTO.userDetail;
-  //       return userDetail;
-  //     } else {
-  //       throw Failure(
-  //         error: response.data['data']['error'] ?? 'Unknown error',
-  //         statusCode: response.data['status'],
-  //       );
-  //     }
-  //   } on DioException catch (e) {
-  //     throw Failure(
-  //       error: e.error.toString(),
-  //       statusCode: e.response?.data['status'] ?? '0',
-  //     );
-  //   }
-  // }
 }

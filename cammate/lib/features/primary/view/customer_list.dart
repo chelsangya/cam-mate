@@ -1,5 +1,5 @@
 import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
-import 'package:cammate/features/primary/view/profile_view.dart';
+import 'package:cammate/features/auth/presentation/view/profile_view.dart';
 import 'package:flutter/material.dart';
 
 class UserList extends StatefulWidget {
@@ -135,8 +135,6 @@ class _UserListState extends State<UserList> {
                         MaterialPageRoute(
                           builder:
                               (context) => ProfileView(
-                                name: customer['name'],
-                                customerId: customer['id'],
                               ),
                         ),
                       );

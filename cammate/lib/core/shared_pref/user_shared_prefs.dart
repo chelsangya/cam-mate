@@ -29,12 +29,43 @@ class UserSharedPrefs {
     }
   }
 
- Future<Either<Failure, String?>> getUserToken() async {
+  Future<Either<Failure, bool>> setUserRole(String role) async {
+    print('Setting User Role: $role');
+    try {
+      await _sharedPreferences.setString('role', role);
+      print('User role saved successfully.');
+      print(_sharedPreferences.getString('role'));
+      return right(true);
+    } catch (e) {
+      return left(Failure(error: e.toString()));
+    }
+  }
+
+  Future<Either<Failure, String?>> getUserToken() async {
     try {
       final token = _sharedPreferences.getString('token');
       return Right(token);
     } catch (e) {
       return Left(Failure(error: e.toString()));
+    }
+  }
+
+  Future<Either<Failure, String?>> getUserRole() async {
+    try {
+      final role = _sharedPreferences.getString('role');
+      print('Retrieved User Role: $role');
+      return Right(role);
+    } catch (e) {
+      return Left(Failure(error: e.toString()));
+    }
+  }
+
+  Future<Either<Failure, bool>> deleteUserRole() async {
+    try {
+      await _sharedPreferences.remove('role');
+      return right(true);
+    } catch (e) {
+      return left(Failure(error: e.toString()));
     }
   }
 

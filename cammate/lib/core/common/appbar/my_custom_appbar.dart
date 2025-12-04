@@ -4,7 +4,7 @@ AppBar myCustomAppBar(BuildContext context, String text) {
   final bool isDashboardPage = text == 'Project Zero' || text == 'Dashboard' || text == 'Marts';
   final bool isLiveView = text == 'Live View' || text == 'Activity';
   final bool isUserPage = text == 'Customer List' || text == 'Users';
-  final bool isSettingsPage = text == 'Profile Details';
+  final bool isSettingsPage = text == 'Profile';
 
   return AppBar(
     backgroundColor: const Color(0xFF0B2B3D),

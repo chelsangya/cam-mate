@@ -1,5 +1,5 @@
 import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
-import 'package:cammate/features/primary/view/profile_view.dart';
+import 'package:cammate/features/auth/presentation/view/profile_view.dart';
 import 'package:flutter/material.dart';
 
 class UserList extends StatefulWidget {
@@ -47,11 +47,7 @@ class _UserListState extends State<UserList> {
       searchQuery = query;
       filteredCustomers =
           customers
-              .where(
-                (customer) => customer['name']!.toLowerCase().contains(
-                  query.toLowerCase(),
-                ),
-              )
+              .where((customer) => customer['name']!.toLowerCase().contains(query.toLowerCase()))
               .toList();
       sortCustomers();
     });
@@ -67,14 +63,10 @@ class _UserListState extends State<UserList> {
           filteredCustomers.sort((a, b) => b['name'].compareTo(a['name']));
           break;
         case 'Recent Purchases':
-          filteredCustomers.sort(
-            (a, b) => b['purchaseDate'].compareTo(a['purchaseDate']),
-          );
+          filteredCustomers.sort((a, b) => b['purchaseDate'].compareTo(a['purchaseDate']));
           break;
         case 'Most Sales':
-          filteredCustomers.sort(
-            (a, b) => b['totalPurchases'].compareTo(a['totalPurchases']),
-          );
+          filteredCustomers.sort((a, b) => b['totalPurchases'].compareTo(a['totalPurchases']));
           break;
       }
     });
@@ -103,13 +95,8 @@ class _UserListState extends State<UserList> {
                 DropdownButton<String>(
                   value: selectedSort,
                   items:
-                      ['Recent Purchases', 'A-Z', 'Z-A', 'Most Sales'].map((
-                        String value,
-                      ) {
-                        return DropdownMenuItem<String>(
-                          value: value,
-                          child: Text(value),
-                        );
+                      ['Recent Purchases', 'A-Z', 'Z-A', 'Most Sales'].map((String value) {
+                        return DropdownMenuItem<String>(value: value, child: Text(value));
                       }).toList(),
                   onChanged: (newValue) {
                     setState(() {
@@ -134,10 +121,8 @@ class _UserListState extends State<UserList> {
                         context,
                         MaterialPageRoute(
                           builder:
-                              (context) => ProfileView(
-                                name: customer['name'],
-                                customerId: customer['id'],
-                              ),
+                              (context) =>
+                                  ProfileView(),
                         ),
                       );
                     },

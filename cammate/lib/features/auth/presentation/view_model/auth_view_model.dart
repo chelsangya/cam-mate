@@ -116,6 +116,13 @@ class AuthViewModel extends StateNotifier<AuthState> {
           );
           showMySnackBar(message: success, context: context);
           // getUserById();
+          final role = userSharedPrefs.getUserRole();
+          if (role == 'superuser' || role == 'SUPERUSER') {
+            Navigator.of(
+              context,
+            ).pushNamedAndRemoveUntil(AppRoute.superUserHomeRoute, (route) => false);
+            return;
+          }
           Navigator.pushNamedAndRemoveUntil(context, AppRoute.superUserHomeRoute, (route) => false);
         },
       );
@@ -247,6 +254,45 @@ class AuthViewModel extends StateNotifier<AuthState> {
     }
   }
 
+  /// Change password for the currently authenticated user.
+  Future<void> changePassword(
+    String currentPassword,
+    String newPassword,
+    BuildContext context,
+  ) async {
+    try {
+      state = state.copyWith(isLoading: true);
+      final result = await authUseCase.changePassword(currentPassword, newPassword);
+      state = state.copyWith(isLoading: false);
+      result.fold(
+        (failure) {
+          final msg =
+              (failure.error.isNotEmpty)
+                  ? failure.error
+                  : 'Could not change password. Please try again later.';
+          state = state.copyWith(error: msg, isLoading: false, showMessage: true, message: msg);
+          showMySnackBar(message: msg, context: context, color: Colors.red[900]);
+        },
+        (successMap) {
+          // successMap may contain a message
+          final message = successMap['message']?.toString() ?? 'Password changed successfully';
+          state = state.copyWith(
+            isLoading: false,
+            message: message,
+            showMessage: true,
+            error: null,
+          );
+          showMySnackBar(message: message, context: context);
+          // After changing password, it's reasonable to navigate back to profile/login
+          Navigator.pop(context);
+        },
+      );
+    } catch (e) {
+      state = state.copyWith(error: 'Error changing password', isLoading: false, showMessage: true);
+      showMySnackBar(message: 'Error changing password', context: context, color: Colors.red[900]);
+    }
+  }
+
   // Future<void> getUserById() async {
   //   state = state.copyWith(isLoading: true);
 
@@ -256,13 +302,15 @@ class AuthViewModel extends StateNotifier<AuthState> {
   // }
 
   void logout(BuildContext context) async {
+    // show a brief loading state, clear tokens, then navigate to login
     state = state.copyWith(isLoading: true);
 
     showMySnackBar(message: 'See you soon. Bye!!', context: context);
 
     await userSharedPrefs.deleteUserToken();
     Future.delayed(const Duration(milliseconds: 1000), () {
-      state = state.copyWith(isLoading: true);
+      // stop loading before navigating so the login screen doesn't inherit a spinning state
+      state = state.copyWith(isLoading: false, showMessage: false, error: null);
       Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
     });
   }

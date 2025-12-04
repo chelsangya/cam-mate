@@ -63,19 +63,17 @@ class MartViewModel extends StateNotifier<MartState> {
       result.fold(
         (failure) {
           // prefer a friendly fallback message when the backend message is empty
-          final msg = (failure.error.isNotEmpty) ? failure.error : 'Could not update mart. Please try again later.';
+          final msg =
+              (failure.error.isNotEmpty)
+                  ? failure.error
+                  : 'Could not update mart. Please try again later.';
           state = state.copyWith(error: msg, isLoading: false, showMessage: true, message: msg);
           // UI (MartsView / Detail view) will show the snackbar from state.message
           successFlag = false;
         },
         (updated) {
           final msg = 'Mart updated';
-          state = state.copyWith(
-            isLoading: false,
-            message: msg,
-            showMessage: true,
-            error: null,
-          );
+          state = state.copyWith(isLoading: false, message: msg, showMessage: true, error: null);
           // refresh list
           Future.microtask(() => fetchAllMarts());
           successFlag = true;
@@ -96,19 +94,17 @@ class MartViewModel extends StateNotifier<MartState> {
       var successFlag = false;
       result.fold(
         (failure) {
-          final msg = (failure.error.isNotEmpty) ? failure.error : 'Could not delete mart. Please try again later.';
+          final msg =
+              (failure.error.isNotEmpty)
+                  ? failure.error
+                  : 'Could not delete mart. Please try again later.';
           state = state.copyWith(error: msg, isLoading: false, showMessage: true, message: msg);
           // UI will display snackbar from state.message
           successFlag = false;
         },
         (message) {
           final msg = message;
-          state = state.copyWith(
-            isLoading: false,
-            message: msg,
-            showMessage: true,
-            error: null,
-          );
+          state = state.copyWith(isLoading: false, message: msg, showMessage: true, error: null);
           // refresh list
           Future.microtask(() => fetchAllMarts());
           successFlag = true;
@@ -176,14 +172,24 @@ class MartViewModel extends StateNotifier<MartState> {
       result.fold(
         (failure) {
           // Preserve existing marts on failure so UI can continue to show cached list.
-          state = state.copyWith(isLoading: false, error: failure.error, showMessage: true, message: failure.error);
+          state = state.copyWith(
+            isLoading: false,
+            error: failure.error,
+            showMessage: true,
+            message: failure.error,
+          );
         },
         (marts) {
           state = state.copyWith(isLoading: false, error: null, marts: marts);
         },
       );
     } catch (e) {
-      state = state.copyWith(isLoading: false, error: 'Failed to load marts', showMessage: true, message: 'Failed to load marts');
+      state = state.copyWith(
+        isLoading: false,
+        error: 'Failed to load marts',
+        showMessage: true,
+        message: 'Failed to load marts',
+      );
     }
   }
 
