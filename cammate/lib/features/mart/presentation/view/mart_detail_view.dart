@@ -178,35 +178,47 @@ class MartDetailView extends ConsumerWidget {
                           final confirmed = await showDialog<bool>(
                             context: context,
                             barrierDismissible: false,
-                            builder: (ctx) => AlertDialog(
-                              backgroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                              contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
-                              actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              title: const Text('Delete mart'),
-                              content: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  const SizedBox(height: 4),
-                                  Icon(Icons.delete_forever, size: 48, color: Colors.redAccent),
-                                  const SizedBox(height: 12),
-                                  Text('Delete "${mart.name}"? This action cannot be undone.'),
-                                ],
-                              ),
-                              actions: [
-                                TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
-                                ElevatedButton(
-                                  onPressed: () => Navigator.pop(ctx, true),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.redAccent,
-                                    foregroundColor: Colors.white,
-                                    shape: const StadiumBorder(),
-                                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                            builder:
+                                (ctx) => AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(20),
                                   ),
-                                  child: const Text('Delete'),
+                                  contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                                  actionsPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 8,
+                                  ),
+                                  title: const Text('Delete mart'),
+                                  content: Column(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const SizedBox(height: 4),
+                                      Icon(Icons.delete_forever, size: 48, color: Colors.redAccent),
+                                      const SizedBox(height: 12),
+                                      Text('Delete "${mart.name}"? This action cannot be undone.'),
+                                    ],
+                                  ),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(ctx, false),
+                                      child: const Text('Cancel'),
+                                    ),
+                                    ElevatedButton(
+                                      onPressed: () => Navigator.pop(ctx, true),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Colors.redAccent,
+                                        foregroundColor: Colors.white,
+                                        shape: const StadiumBorder(),
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 18,
+                                          vertical: 12,
+                                        ),
+                                      ),
+                                      child: const Text('Delete'),
+                                    ),
+                                  ],
                                 ),
-                              ],
-                            ),
                           );
 
                           if (confirmed != true) return;
