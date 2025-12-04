@@ -139,7 +139,13 @@ class _CreateUserViewState extends ConsumerState<CreateUserView> {
                                 ),
                               )
                               .toList(),
-                      onChanged: (v) => setState(() => _selectedRole = v),
+                      onChanged: (v) => setState(() {
+                        _selectedRole = v;
+                        // If role becomes superuser, clear any mart selection
+                        if ((v ?? '').toLowerCase() == 'superuser') {
+                          _selectedMartId = null;
+                        }
+                      }),
                       validator: (v) => (v == null || v.trim().isEmpty) ? 'Role is required' : null,
                     ),
                     const SizedBox(height: 12),
