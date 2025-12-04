@@ -20,7 +20,6 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
   void initState() {
     super.initState();
     getUser();
-    // getUserRole is asynchronous and returns Either<Failure,String?>
     _loadRole();
   }
 
@@ -52,7 +51,6 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               ElevatedButton(
                 onPressed: () {
                   Navigator.of(dialogCtx).pop();
-                  // call viewmodel logout which handles token removal and navigation
                   ref.read(authViewModelProvider.notifier).logout(context);
                 },
                 style: ElevatedButton.styleFrom(
@@ -70,9 +68,7 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   Future<void> _loadRole() async {
     final res = await userSharedPrefs.getUserRole();
-    // fold Either<Failure, String?> into role (use empty string on failure/null)
     res.fold((_) => setState(() => role = ''), (r) => setState(() => role = r ?? ''));
-    // cleaned up: build method and getUser inserted below
   }
 
   Future<void> getUser() async {
