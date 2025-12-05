@@ -8,8 +8,7 @@ import 'package:dio/dio.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 
-final activityRemoteDataSourceProvider =
-    Provider.autoDispose<ActivityRemoteDataSource>(
+final activityRemoteDataSourceProvider = Provider.autoDispose<ActivityRemoteDataSource>(
   (ref) => ActivityRemoteDataSource(
     dio: ref.read(httpServiceProvider),
     userSharedPrefs: ref.read(userSharedPrefsProvider),
@@ -76,45 +75,47 @@ class ActivityRemoteDataSource {
   }) async {
     final tokenResult = await _getValidToken();
 
-    return await tokenResult.fold(
-      (failure) => Left(failure),
-      (token) async {
-        try {
-          final response = await dio.get(
-            ApiEndpoints.getActivities,
-            queryParameters: {
-              if (martId != null) 'mart_id': martId,
-              if (status != null) 'status': status,
-              if (priority != null) 'priority': priority,
-              'skip': skip,
-              'limit': limit,
-            },
-            options: Options(
-              headers: {'accept': 'application/json', 'Authorization': 'Bearer $token'},
-            ),
-          );
+    return await tokenResult.fold((failure) => Left(failure), (token) async {
+      try {
+        final response = await dio.get(
+          ApiEndpoints.getActivities,
+          queryParameters: {
+            if (martId != null) 'mart_id': martId,
+            if (status != null) 'status': status,
+            if (priority != null) 'priority': priority,
+            'skip': skip,
+            'limit': limit,
+          },
+          options: Options(
+            headers: {'accept': 'application/json', 'Authorization': 'Bearer $token'},
+          ),
+        );
 
-          if (response.statusCode == 200 && response.data is List) {
-            final activities = (response.data as List)
-                .map((json) => ActivityAPIModel.fromJson(
+        if (response.statusCode == 200 && response.data is List) {
+          final activities =
+              (response.data as List)
+                  .map(
+                    (json) => ActivityAPIModel.fromJson(
                       (json as Map).map((k, v) => MapEntry(k.toString(), v)),
-                    ))
-                .toList();
-            return Right(activities);
-          } else {
-            final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-            return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-          }
-        } on DioException catch (e) {
-          return Left(Failure(
+                    ),
+                  )
+                  .toList();
+          return Right(activities);
+        } else {
+          final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
+          return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
+        }
+      } on DioException catch (e) {
+        return Left(
+          Failure(
             error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
             statusCode: e.response?.statusCode ?? 0,
-          ));
-        } catch (e) {
-          return Left(Failure(error: e.toString(), statusCode: 0));
-        }
-      },
-    );
+          ),
+        );
+      } catch (e) {
+        return Left(Failure(error: e.toString(), statusCode: 0));
+      }
+    });
   }
 
   Future<Either<Failure, ActivityAPIModel>> createActivity({
@@ -129,113 +130,108 @@ class ActivityRemoteDataSource {
     String? priority,
   }) async {
     final tokenResult = await _getValidToken();
-    return await tokenResult.fold(
-      (failure) => Left(failure),
-      (token) async {
-        try {
-          final response = await dio.post(
-            ApiEndpoints.createActivity,
-            data: {
-              'camera_id': cameraId,
-              'activity_type': activityType,
-              'description': description,
-              'confidence': confidence,
-              if (status != null) 'status': status,
-              if (videoClip != null) 'video_clip': videoClip,
-              if (imageUrl != null) 'image_url': imageUrl,
-              if (assignedTo != null) 'assigned_to': assignedTo,
-              if (priority != null) 'priority': priority,
-            },
-            options: Options(
-              headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
-            ),
-          );
+    return await tokenResult.fold((failure) => Left(failure), (token) async {
+      try {
+        print('Creating activity with cameraId: $cameraId, activityType: $activityType');
+        final response = await dio.post(
+          ApiEndpoints.createActivity,
+          data: {
+            'camera_id': cameraId,
+            'activity_type': activityType,
+            'description': description,
+            'confidence': confidence,
+            if (status != null) 'status': status,
+            if (videoClip != null) 'video_clip': videoClip,
+            if (imageUrl != null) 'image_url': imageUrl,
+            if (assignedTo != null) 'assigned_to': assignedTo,
+            if (priority != null) 'priority': priority,
+          },
+          options: Options(
+            headers: {'Content-Type': 'application/json', 'Authorization': 'Bearer $token'},
+          ),
+        );
+        print('Response status: ${response.statusCode}, data: ${response.data}');
 
-          if (response.statusCode == 201) {
-            final data = (response.data as Map).map(
-              (k, v) => MapEntry(k.toString(), v),
-            );
-            return Right(ActivityAPIModel.fromJson(data));
-          } else {
-            final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-            return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-          }
-        } on DioException catch (e) {
-          return Left(Failure(
+        if (response.statusCode == 201) {
+          final data = (response.data as Map).map((k, v) => MapEntry(k.toString(), v));
+          return Right(ActivityAPIModel.fromJson(data));
+        } else {
+          final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
+          return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
+        }
+      } on DioException catch (e) {
+        return Left(
+          Failure(
             error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
             statusCode: e.response?.statusCode ?? 0,
-          ));
-        } catch (e) {
-          return Left(Failure(error: e.toString(), statusCode: 0));
-        }
-      },
-    );
+          ),
+        );
+      } catch (e) {
+        return Left(Failure(error: e.toString(), statusCode: 0));
+      }
+    });
   }
 
   Future<Either<Failure, String>> getActivityStats({required int martId}) async {
     final tokenResult = await _getValidToken();
-    return await tokenResult.fold(
-      (failure) => Left(failure),
-      (token) async {
-        try {
-          final response = await dio.get(
-            ApiEndpoints.activityStats,
-            queryParameters: {'mart_id': martId},
-            options: Options(
-              headers: {'Authorization': 'Bearer $token', 'accept': 'application/json'},
-            ),
-          );
+    return await tokenResult.fold((failure) => Left(failure), (token) async {
+      try {
+        final response = await dio.get(
+          ApiEndpoints.activityStats,
+          queryParameters: {'mart_id': martId},
+          options: Options(
+            headers: {'Authorization': 'Bearer $token', 'accept': 'application/json'},
+          ),
+        );
 
-          if (response.statusCode == 200) {
-            return Right(response.data.toString());
-          } else {
-            final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-            return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-          }
-        } on DioException catch (e) {
-          return Left(Failure(
+        if (response.statusCode == 200) {
+          return Right(response.data.toString());
+        } else {
+          final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
+          return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
+        }
+      } on DioException catch (e) {
+        return Left(
+          Failure(
             error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
             statusCode: e.response?.statusCode ?? 0,
-          ));
-        } catch (e) {
-          return Left(Failure(error: e.toString(), statusCode: 0));
-        }
-      },
-    );
+          ),
+        );
+      } catch (e) {
+        return Left(Failure(error: e.toString(), statusCode: 0));
+      }
+    });
   }
 
   Future<Either<Failure, ActivityAPIModel>> getActivityById(int activityId) async {
     final tokenResult = await _getValidToken();
-    return await tokenResult.fold(
-      (failure) => Left(failure),
-      (token) async {
-        try {
-          final response = await dio.get(
-            ApiEndpoints.getActivity(activityId.toString()),
-            options: Options(
-              headers: {'Authorization': 'Bearer $token', 'accept': 'application/json'},
-            ),
-          );
+    return await tokenResult.fold((failure) => Left(failure), (token) async {
+      try {
+        final response = await dio.get(
+          ApiEndpoints.getActivity(activityId.toString()),
+          options: Options(
+            headers: {'Authorization': 'Bearer $token', 'accept': 'application/json'},
+          ),
+        );
 
-          if (response.statusCode == 200) {
-            final data = (response.data as Map).map(
-              (k, v) => MapEntry(k.toString(), v),
-            );
-            return Right(ActivityAPIModel.fromJson(data));
-          } else {
-            final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-            return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-          }
-        } on DioException catch (e) {
-          return Left(Failure(
+        if (response.statusCode == 200) {
+          final data = (response.data as Map).map((k, v) => MapEntry(k.toString(), v));
+          return Right(ActivityAPIModel.fromJson(data));
+        } else {
+          final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
+          return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
+        }
+      } on DioException catch (e) {
+        return Left(
+          Failure(
             error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
             statusCode: e.response?.statusCode ?? 0,
-          ));
-        } catch (e) {
-          return Left(Failure(error: e.toString(), statusCode: 0));
-        }
-      },
-    );
+          ),
+        );
+      } catch (e) {
+        return Left(Failure(error: e.toString(), statusCode: 0));
+      }
+    });
   }
 
   Future<Either<Failure, ActivityAPIModel>> updateActivity(
@@ -246,80 +242,77 @@ class ActivityRemoteDataSource {
     String? priority,
   }) async {
     final tokenResult = await _getValidToken();
-    return await tokenResult.fold(
-      (failure) => Left(failure),
-      (token) async {
-        try {
-          final body = <String, dynamic>{};
-          if (description != null) body['description'] = description;
-          if (status != null) body['status'] = status;
-          if (assignedTo != null) body['assigned_to'] = assignedTo;
-          if (priority != null) body['priority'] = priority;
+    return await tokenResult.fold((failure) => Left(failure), (token) async {
+      try {
+        final body = <String, dynamic>{};
+        if (description != null) body['description'] = description;
+        if (status != null) body['status'] = status;
+        if (assignedTo != null) body['assigned_to'] = assignedTo;
+        if (priority != null) body['priority'] = priority;
 
-          final response = await dio.put(
-            ApiEndpoints.updateActivity(activityId.toString()),
-            data: body,
-            options: Options(
-              headers: {
-                'Authorization': 'Bearer $token',
-                'accept': 'application/json',
-                'Content-Type': 'application/json',
-              },
-            ),
-          );
+        final response = await dio.put(
+          ApiEndpoints.updateActivity(activityId.toString()),
+          data: body,
+          options: Options(
+            headers: {
+              'Authorization': 'Bearer $token',
+              'accept': 'application/json',
+              'Content-Type': 'application/json',
+            },
+          ),
+        );
 
-          if (response.statusCode == 200) {
-            final data = (response.data as Map).map(
-              (k, v) => MapEntry(k.toString(), v),
-            );
-            return Right(ActivityAPIModel.fromJson(data));
-          } else {
-            final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-            return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-          }
-        } on DioException catch (e) {
-          return Left(Failure(
+        if (response.statusCode == 200) {
+          final data = (response.data as Map).map((k, v) => MapEntry(k.toString(), v));
+          return Right(ActivityAPIModel.fromJson(data));
+        } else {
+          final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
+          return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
+        }
+      } on DioException catch (e) {
+        return Left(
+          Failure(
             error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
             statusCode: e.response?.statusCode ?? 0,
-          ));
-        } catch (e) {
-          return Left(Failure(error: e.toString(), statusCode: 0));
-        }
-      },
-    );
+          ),
+        );
+      } catch (e) {
+        return Left(Failure(error: e.toString(), statusCode: 0));
+      }
+    });
   }
 
   Future<Either<Failure, String>> deleteActivity(int activityId) async {
     final tokenResult = await _getValidToken();
-    return await tokenResult.fold(
-      (failure) => Left(failure),
-      (token) async {
-        try {
-          final response = await dio.delete(
-            ApiEndpoints.deleteActivity(activityId.toString()),
-            options: Options(
-              headers: {'Authorization': 'Bearer $token', 'accept': 'application/json'},
-            ),
-          );
+    return await tokenResult.fold((failure) => Left(failure), (token) async {
+      try {
+        final response = await dio.delete(
+          ApiEndpoints.deleteActivity(activityId.toString()),
+          options: Options(
+            headers: {'Authorization': 'Bearer $token', 'accept': 'application/json'},
+          ),
+        );
 
-          if (response.statusCode == 200) {
-            final message = response.data is String
-                ? response.data
-                : response.data['message']?.toString() ?? 'Activity deleted successfully';
-            return Right(message);
-          } else {
-            final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-            return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-          }
-        } on DioException catch (e) {
-          return Left(Failure(
+        if (response.statusCode == 200) {
+          final message =
+              response.data is String
+                  ? response.data
+                  : response.data['message']?.toString() ?? 'Activity deleted successfully';
+          return Right(message);
+        } else {
+          final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
+          return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
+        }
+      } on DioException catch (e) {
+        return Left(
+          Failure(
             error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
             statusCode: e.response?.statusCode ?? 0,
-          ));
-        } catch (e) {
-          return Left(Failure(error: e.toString(), statusCode: 0));
-        }
-      },
-    );
+          ),
+        );
+      } catch (e) {
+        return Left(Failure(error: e.toString(), statusCode: 0));
+      }
+    });
   }
 }

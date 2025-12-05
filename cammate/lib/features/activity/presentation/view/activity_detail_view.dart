@@ -1,12 +1,12 @@
 import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
-import 'package:cammate/features/user/data/model/user_model.dart';
-import 'package:cammate/features/user/presentation/view_model/user_view_model.dart';
+import 'package:cammate/features/activity/data/model/activity_model.dart';
+import 'package:cammate/features/activity/presentation/view_model/activity_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class UserDetailView extends ConsumerWidget {
-  final UserAPIModel user;
-  const UserDetailView({super.key, required this.user});
+class ActivityDetailView extends ConsumerWidget {
+  final ActivityAPIModel activity;
+  const ActivityDetailView({super.key, required this.activity});
 
   Widget _infoRow(IconData icon, String label) {
     return Padding(
@@ -25,7 +25,7 @@ class UserDetailView extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
-      appBar: myCustomAppBar(context, '${user.firstName} ${user.lastName}'),
+      appBar: myCustomAppBar(context, activity.activityType),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
@@ -44,8 +44,8 @@ class UserDetailView extends ConsumerWidget {
                         radius: 28,
                         backgroundColor: Colors.blue.shade50,
                         child: Text(
-                          ('${user.firstName} ${user.lastName}').trim().isNotEmpty
-                              ? ('${user.firstName} ${user.lastName}').trim()[0].toUpperCase()
+                          activity.activityType.isNotEmpty
+                              ? activity.activityType[0].toUpperCase()
                               : '?',
                           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                         ),
@@ -53,74 +53,61 @@ class UserDetailView extends ConsumerWidget {
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
-                          '${user.firstName} ${user.lastName}',
+                          activity.activityType,
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                         ),
                       ),
                       IconButton(
                         onPressed: () async {
-                          // open edit dialog
+                          // open edit dialog for editable activity fields
                           await showDialog<bool>(
                             context: context,
                             builder: (ctx) {
-                              final emailController = TextEditingController(text: user.email);
-                              final firstController = TextEditingController(text: user.firstName);
-                              final lastController = TextEditingController(text: user.lastName);
-                              final roleController = TextEditingController(text: user.role);
-                              final martController = TextEditingController(
-                                text: user.martId?.toString() ?? '',
+                              final descriptionController = TextEditingController(
+                                text: activity.description ?? '',
                               );
-                              bool isActive = user.isActive ?? true;
+                              final statusController = TextEditingController(
+                                text: activity.status ?? '',
+                              );
+                              final assignedController = TextEditingController(
+                                text: activity.assignedTo ?? '',
+                              );
+                              final priorityController = TextEditingController(
+                                text: activity.priority ?? '',
+                              );
 
                               return StatefulBuilder(
                                 builder: (ctx2, setState2) {
                                   return AlertDialog(
-                                    title: const Text('Edit User'),
+                                    title: const Text('Edit Activity'),
                                     content: SingleChildScrollView(
                                       child: Column(
                                         children: [
                                           TextField(
-                                            controller: emailController,
-                                            decoration: const InputDecoration(labelText: 'Email'),
+                                            controller: descriptionController,
+                                            decoration: const InputDecoration(
+                                              labelText: 'Description',
+                                            ),
+                                            maxLines: 3,
                                           ),
                                           const SizedBox(height: 8),
                                           TextField(
-                                            controller: firstController,
+                                            controller: statusController,
+                                            decoration: const InputDecoration(labelText: 'Status'),
+                                          ),
+                                          const SizedBox(height: 8),
+                                          TextField(
+                                            controller: assignedController,
                                             decoration: const InputDecoration(
-                                              labelText: 'First name',
+                                              labelText: 'Assigned To',
                                             ),
                                           ),
                                           const SizedBox(height: 8),
                                           TextField(
-                                            controller: lastController,
+                                            controller: priorityController,
                                             decoration: const InputDecoration(
-                                              labelText: 'Last name',
+                                              labelText: 'Priority',
                                             ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: roleController,
-                                            decoration: const InputDecoration(labelText: 'Role'),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: martController,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Mart ID (optional)',
-                                            ),
-                                            keyboardType: TextInputType.number,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Row(
-                                            children: [
-                                              Checkbox(
-                                                value: isActive,
-                                                onChanged:
-                                                    (v) => setState2(() => isActive = v ?? true),
-                                              ),
-                                              const SizedBox(width: 8),
-                                              const Text('Active'),
-                                            ],
                                           ),
                                         ],
                                       ),
@@ -132,25 +119,28 @@ class UserDetailView extends ConsumerWidget {
                                       ),
                                       TextButton(
                                         onPressed: () async {
-                                          final updated = UserAPIModel(
-                                            id: user.id,
-                                            email: emailController.text.trim(),
-                                            firstName: firstController.text.trim(),
-                                            lastName: lastController.text.trim(),
-                                            role: roleController.text.trim(),
-                                            isActive: isActive,
-                                            martId:
-                                                martController.text.trim().isEmpty
-                                                    ? null
-                                                    : int.tryParse(martController.text.trim()),
-                                            createdById: user.createdById,
-                                            createdAt: user.createdAt,
-                                            updatedAt: DateTime.now(),
-                                          );
-
                                           final success = await ref
-                                              .read(userViewModelProvider.notifier)
-                                              .updateUser(user.id!, updated, context);
+                                              .read(activityViewModelProvider.notifier)
+                                              .updateActivity(
+                                                activity.id!,
+                                                description:
+                                                    descriptionController.text.trim().isEmpty
+                                                        ? null
+                                                        : descriptionController.text.trim(),
+                                                status:
+                                                    statusController.text.trim().isEmpty
+                                                        ? null
+                                                        : statusController.text.trim(),
+                                                assignedTo:
+                                                    assignedController.text.trim().isEmpty
+                                                        ? null
+                                                        : assignedController.text.trim(),
+                                                priority:
+                                                    priorityController.text.trim().isEmpty
+                                                        ? null
+                                                        : priorityController.text.trim(),
+                                                context: context,
+                                              );
                                           if (success) {
                                             Navigator.pop(ctx2, true);
                                             Navigator.pop(context);
@@ -167,20 +157,22 @@ class UserDetailView extends ConsumerWidget {
                         },
                         icon: const Icon(Icons.edit, color: Colors.blue),
                       ),
-                      // Deletion is not supported from the detail view.
                     ],
                   ),
                   const SizedBox(height: 12),
-                  _infoRow(Icons.email, user.email),
-                  _infoRow(Icons.person, user.role),
-                  if (user.martId != null) _infoRow(Icons.store, 'Mart ID: ${user.martId}'),
+                  _infoRow(Icons.description, activity.description ?? ''),
+                  _infoRow(Icons.category, activity.activityType),
+                  if (activity.imageUrl != null) _infoRow(Icons.image, activity.imageUrl!),
+                  if (activity.videoClip != null) _infoRow(Icons.videocam, activity.videoClip!),
                   const SizedBox(height: 8),
                   Row(
                     children: [
                       const Text('Status: ', style: TextStyle(fontWeight: FontWeight.w600)),
                       Text(
-                        user.isActive == true ? 'Active' : 'Inactive',
-                        style: TextStyle(color: user.isActive == true ? Colors.green : Colors.red),
+                        activity.status ?? 'Unknown',
+                        style: TextStyle(
+                          color: activity.status == 'open' ? Colors.green : Colors.red,
+                        ),
                       ),
                     ],
                   ),

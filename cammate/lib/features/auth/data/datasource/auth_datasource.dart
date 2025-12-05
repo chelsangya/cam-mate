@@ -143,10 +143,19 @@ class AuthRemoteDataSource {
       if (response.statusCode == 200) {
         // The backend only returns token info
         String token = response.data['access_token'];
+        String role = response.data['role'].toLowerCase();
+        String firstName = response.data['first_name'];
+        String lastName = response.data['last_name'];
+        String uid = response.data['uid'];
+
         userSharedPrefs.setUserToken(token);
-        final user = {'username': username, 'password': password, 'role': 'superuser'};
-        final role = user['role'];
-        userSharedPrefs.setUserRole(role as String);
+        final user = {
+          'username': username,
+          'first_name': firstName,
+          'last_name': lastName,
+          'uid': uid,
+        };
+        userSharedPrefs.setUserRole(role);
         userSharedPrefs.setUser(user);
 
         return Right('Login successful');

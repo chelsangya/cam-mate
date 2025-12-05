@@ -1,24 +1,26 @@
 import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
-import 'package:cammate/features/user/presentation/view/create_user_view.dart';
-import 'package:cammate/features/user/presentation/view/user_detail_view.dart';
-import 'package:cammate/features/user/presentation/view_model/user_view_model.dart';
+import 'package:cammate/features/activity/presentation/view/activity_detail_view.dart';
+import 'package:cammate/features/activity/presentation/view/create_activity_view.dart';
+import 'package:cammate/features/activity/presentation/view_model/activity_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class UsersView extends ConsumerStatefulWidget {
-  const UsersView({super.key});
+class ActivitiesView extends ConsumerStatefulWidget {
+  const ActivitiesView({super.key});
 
   @override
-  ConsumerState<UsersView> createState() => _UsersViewState();
+  ConsumerState<ActivitiesView> createState() => _ActivitiesViewState();
 }
 
-class _UsersViewState extends ConsumerState<UsersView> {
+class _ActivitiesViewState extends ConsumerState<ActivitiesView> {
   final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    Future.microtask(() => ref.read(userViewModelProvider.notifier).fetchAllUsers(context));
+    Future.microtask(
+      () => ref.read(activityViewModelProvider.notifier).fetchActivities(context: context),
+    );
   }
 
   @override
@@ -27,20 +29,24 @@ class _UsersViewState extends ConsumerState<UsersView> {
     super.dispose();
   }
 
-  Future<void> _refresh() async => ref.read(userViewModelProvider.notifier).fetchAllUsers(context);
+  Future<void> _refresh() async =>
+      ref.read(activityViewModelProvider.notifier).fetchActivities(context: context);
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
-      appBar: myCustomAppBar(context, 'Users'),
+      appBar: myCustomAppBar(context, 'Activities'),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateUserView()));
-          // refresh after returning in case a new user was created
-          ref.read(userViewModelProvider.notifier).fetchAllUsers(context);
+          await Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => const CreateActivityView()),
+          );
+          // refresh after returning in case a new activity was created
+          ref.read(activityViewModelProvider.notifier).fetchActivities(context: context);
         },
-        tooltip: 'Create User',
+        tooltip: 'Create Activity',
         elevation: 4,
         child: const Icon(Icons.add),
       ),
@@ -52,7 +58,7 @@ class _UsersViewState extends ConsumerState<UsersView> {
               Expanded(
                 child: Consumer(
                   builder: (context, ref2, _) {
-                    final state = ref2.watch(userViewModelProvider);
+                    final state = ref2.watch(activityViewModelProvider);
 
                     if (state.isLoading) {
                       return const Center(child: CircularProgressIndicator());
@@ -64,29 +70,26 @@ class _UsersViewState extends ConsumerState<UsersView> {
                         ScaffoldMessenger.of(
                           context,
                         ).showSnackBar(SnackBar(content: Text(state.message!)));
-                        ref.read(userViewModelProvider.notifier).resetMessage(false);
+                        ref.read(activityViewModelProvider.notifier).resetMessage(false);
                       });
                     }
 
-                    final allUsers = state.users;
+                    final allActivities = state.activities;
                     final query = _searchController.text.trim().toLowerCase();
-                    final users =
+                    final activities =
                         query.isEmpty
-                            ? allUsers
-                            : allUsers.where((m) {
-                              final name = ('${m.firstName} ${m.lastName}').toLowerCase();
-                              final email = m.email.toLowerCase();
-                              final role = m.role.toLowerCase();
-                              return name.contains(query) ||
-                                  email.contains(query) ||
-                                  role.contains(query);
+                            ? allActivities
+                            : allActivities.where((a) {
+                              final desc = (a.description ?? '').toLowerCase();
+                              final type = a.activityType.toLowerCase();
+                              return desc.contains(query) || type.contains(query);
                             }).toList();
 
                     return RefreshIndicator(
                       onRefresh: _refresh,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: 1 + (users.isEmpty ? 1 : users.length),
+                        itemCount: 1 + (activities.isEmpty ? 1 : activities.length),
                         itemBuilder: (context, index) {
                           if (index == 0) {
                             // search bar at the top
@@ -113,7 +116,7 @@ class _UsersViewState extends ConsumerState<UsersView> {
                                       child: TextField(
                                         controller: _searchController,
                                         decoration: const InputDecoration(
-                                          hintText: 'Search users by name or address',
+                                          hintText: 'Search activities by type or description',
                                           border: InputBorder.none,
                                           isDense: true,
                                         ),
@@ -128,10 +131,9 @@ class _UsersViewState extends ConsumerState<UsersView> {
                                     else
                                       IconButton(
                                         onPressed:
-                                            () =>
-                                                ref
-                                                    .read(userViewModelProvider.notifier)
-                                                    .fetchAllUsers(context),
+                                            () => ref
+                                                .read(activityViewModelProvider.notifier)
+                                                .fetchActivities(context: context),
                                         icon: const Icon(Icons.refresh, color: Colors.black54),
                                       ),
                                   ],
@@ -140,17 +142,17 @@ class _UsersViewState extends ConsumerState<UsersView> {
                             );
                           }
 
-                          if (users.isEmpty) {
+                          if (activities.isEmpty) {
                             return Column(
                               children: const [
                                 SizedBox(height: 40),
                                 Center(
-                                  child: Icon(Icons.storefront, size: 56, color: Colors.black12),
+                                  child: Icon(Icons.event_note, size: 56, color: Colors.black12),
                                 ),
                                 SizedBox(height: 12),
                                 Center(
                                   child: Text(
-                                    'No users yet',
+                                    'No activities yet',
                                     style: TextStyle(color: Colors.black54, fontSize: 16),
                                   ),
                                 ),
@@ -158,7 +160,7 @@ class _UsersViewState extends ConsumerState<UsersView> {
                             );
                           }
 
-                          final user = users[index - 1];
+                          final activity = activities[index - 1];
 
                           // Deletion from the UI is not supported. Show a non-dismissible row.
                           return Container(
@@ -179,7 +181,9 @@ class _UsersViewState extends ConsumerState<UsersView> {
                               onTap:
                                   () => Navigator.push(
                                     context,
-                                    MaterialPageRoute(builder: (_) => UserDetailView(user: user)),
+                                    MaterialPageRoute(
+                                      builder: (_) => ActivityDetailView(activity: activity),
+                                    ),
                                   ),
                               child: Padding(
                                 padding: const EdgeInsets.all(12.0),
@@ -189,11 +193,9 @@ class _UsersViewState extends ConsumerState<UsersView> {
                                       radius: 26,
                                       backgroundColor: Colors.blue.shade50,
                                       child: Text(
-                                        (('${user.firstName} ${user.lastName}').trim().isNotEmpty
-                                            ? ('${user.firstName} ${user.lastName}')
-                                                .trim()[0]
-                                                .toUpperCase()
-                                            : '?'),
+                                        activity.activityType.isNotEmpty
+                                            ? activity.activityType[0].toUpperCase()
+                                            : '?',
                                         style: const TextStyle(
                                           fontSize: 18,
                                           fontWeight: FontWeight.w700,
@@ -207,7 +209,7 @@ class _UsersViewState extends ConsumerState<UsersView> {
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            '${user.firstName} ${user.lastName}',
+                                            activity.activityType,
                                             style: const TextStyle(
                                               fontSize: 16,
                                               fontWeight: FontWeight.w700,
@@ -215,7 +217,7 @@ class _UsersViewState extends ConsumerState<UsersView> {
                                           ),
                                           const SizedBox(height: 6),
                                           Text(
-                                            user.email,
+                                            activity.description ?? '',
                                             style: const TextStyle(color: Colors.black54),
                                             maxLines: 2,
                                             overflow: TextOverflow.ellipsis,
@@ -224,7 +226,7 @@ class _UsersViewState extends ConsumerState<UsersView> {
                                           Row(
                                             children: [
                                               Text(
-                                                user.role,
+                                                activity.status ?? '',
                                                 style: const TextStyle(
                                                   fontSize: 12,
                                                   color: Colors.black45,
@@ -232,12 +234,12 @@ class _UsersViewState extends ConsumerState<UsersView> {
                                               ),
                                               const Spacer(),
                                               Text(
-                                                user.isActive == true ? 'Active' : 'Inactive',
+                                                activity.priority ?? '',
                                                 style: TextStyle(
                                                   color:
-                                                      user.isActive == true
-                                                          ? Colors.green
-                                                          : Colors.red,
+                                                      activity.priority == 'high'
+                                                          ? Colors.red
+                                                          : Colors.green,
                                                   fontSize: 12,
                                                 ),
                                               ),

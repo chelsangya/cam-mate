@@ -1,3 +1,4 @@
+import 'package:cammate/features/activity/presentation/view/activity_view.dart';
 import 'package:cammate/features/auth/presentation/view/profile_view.dart';
 import 'package:cammate/features/mart/presentation/view/marts_view.dart';
 import 'package:cammate/features/user/presentation/view/users_view.dart';
@@ -20,7 +21,12 @@ class SuperPrimaryState {
     : index = 0,
       isLoading = false,
       // elements = [],
-      lstWidgets = [const MartsView(), const UsersView(), const MartsView(), const ProfileView()];
+      lstWidgets = [
+        const MartsView(),
+        const UsersView(),
+        const ActivitiesView(),
+        const ProfileView(),
+      ];
 
   SuperPrimaryState copyWith({
     int? index,
