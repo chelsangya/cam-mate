@@ -82,7 +82,27 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    final displayName = user != null ? (user!['full_name'] ?? user!['username'] ?? 'User') : 'User';
+    // Prefer first_name + last_name, then full_name, then name, then username
+    String? firstName = user != null ? (user!['first_name'] as String?) : null;
+    String? lastName = user != null ? (user!['last_name'] as String?) : null;
+    String? fullName = user != null ? (user!['full_name'] as String?) : null;
+    String? name = user != null ? (user!['name'] as String?) : null;
+    String? username = user != null ? (user!['username'] as String?) : null;
+    String? email = user != null ? (user!['email'] as String?) : null;
+
+    final combinedName =
+        ((firstName ?? '').trim().isNotEmpty || (lastName ?? '').trim().isNotEmpty)
+            ? '${(firstName ?? '').trim()} ${(lastName ?? '').trim()}'.trim()
+            : null;
+
+    final displayName =
+        combinedName?.isNotEmpty == true
+            ? combinedName!
+            : (fullName?.trim().isNotEmpty == true
+                ? fullName!.trim()
+                : (name?.trim().isNotEmpty == true
+                    ? name!.trim()
+                    : (username?.trim().isNotEmpty == true ? username!.trim() : 'User')));
 
     return Scaffold(
       appBar: myCustomAppBar(context, 'Profile'),
@@ -103,6 +123,9 @@ class _ProfileViewState extends ConsumerState<ProfileView> {
               ),
               const SizedBox(height: 12),
               Text(displayName, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
+              if ((email ?? '').trim().isNotEmpty)
+                Text(email!.trim(), style: TextStyle(fontSize: 14, color: Colors.grey[700])),
               const SizedBox(height: 8),
               if (role.trim().isNotEmpty)
                 Container(

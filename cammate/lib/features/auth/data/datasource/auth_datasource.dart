@@ -141,22 +141,29 @@ class AuthRemoteDataSource {
       );
 
       if (response.statusCode == 200) {
-        // The backend only returns token info
-        String token = response.data['access_token'];
-        String role = response.data['role'].toLowerCase();
-        String firstName = response.data['first_name'];
-        String lastName = response.data['last_name'];
-        String uid = response.data['uid'];
+        // The backend returns token and user info. Read fields defensively to avoid null cast errors.
+        final token = response.data['access_token'] as String? ?? '';
+        final role = (response.data['role'] as String?)?.toLowerCase() ?? '';
+        final firstName = response.data['first_name'] as String? ?? '';
+        final lastName = response.data['last_name'] as String? ?? '';
+        // Some backends use `uid` while others use `user_id` or `userId`.
+        final uid = (response.data['uid'] ?? response.data['user_id'] ?? response.data['userId'])?.toString() ?? '';
+        final email = response.data['email'] as String? ?? '';
 
-        userSharedPrefs.setUserToken(token);
+        if (token.isEmpty) {
+          return Left(Failure(error: 'Empty access token received', statusCode: 500));
+        }
+
+        await userSharedPrefs.setUserToken(token);
         final user = {
           'username': username,
           'first_name': firstName,
           'last_name': lastName,
           'uid': uid,
+          'email': email,
         };
-        userSharedPrefs.setUserRole(role);
-        userSharedPrefs.setUser(user);
+        await userSharedPrefs.setUserRole(role);
+        await userSharedPrefs.setUser(user);
 
         return Right('Login successful');
       } else {
