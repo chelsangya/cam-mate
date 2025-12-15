@@ -22,57 +22,16 @@ class UserRemoteDataSource {
 
   UserRemoteDataSource({required this.dio, required this.userSharedPrefs});
 
-  /// Helper: Get valid token (refresh if expired)
   Future<Either<Failure, String>> _getValidToken() async {
     final tokenEither = await userSharedPrefs.getUserToken();
     String? token = tokenEither.fold((_) => null, (t) => t);
-
     if (token == null || token.isEmpty) {
       return Left(Failure(error: 'User is not authenticated', statusCode: 401));
     }
-
     if (JwtDecoder.isExpired(token)) {
-      // Try to refresh token if expired
-      final refreshResult = await _refreshToken(token);
-      if (refreshResult.isLeft()) {
-        print('Token refresh failed inside datasource user $refreshResult');
-        return Left(Failure(error: 'Token expired and refresh failed', statusCode: 401));
-      } else {
-        token = refreshResult.getOrElse(() => '');
-      }
-    }
-
-    return Right(token);
-  }
-
-  /// Refresh token
-  Future<Either<Failure, String>> _refreshToken(String expiredToken) async {
-    try {
-      print('trying to refresh token');
-      final response = await dio.post(
-        ApiEndpoints.refreshToken,
-        data: {"refresh_token": expiredToken},
-        options: Options(headers: {'Content-Type': 'application/json'}),
-      );
-      print('Refresh token response: ${response.data}');
-
-      if (response.statusCode == 200 && response.data['access_token'] != null) {
-        final newToken = response.data['access_token'] as String?;
-
-        // Ensure the token is valid and not empty
-        if (newToken == null || newToken.isEmpty) {
-          return Left(Failure(error: 'Empty token received during refresh', statusCode: 400));
-        }
-
-        await userSharedPrefs.setUserToken(newToken);
-        return Right(newToken);
-      } else {
-        final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-        return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-      }
-    } catch (e) {
-      print('Error during token refresh: $e');
-      return Left(Failure(error: e.toString(), statusCode: 500));
+      return Left(Failure(error: 'Token expired', statusCode: 401));
+    } else {
+      return Right(token);
     }
   }
 
@@ -89,11 +48,6 @@ class UserRemoteDataSource {
         // Mask password for debug printing
         final maskedBody = Map<String, dynamic>.from(body);
         if (maskedBody.containsKey('password')) maskedBody['password'] = '***';
-        if (kDebugMode) {
-          // Print URL and masked body to help diagnose backend validation errors
-          print('➡️ CreateUser POST ${ApiEndpoints.createUser}');
-          print('➡️ Request body: $maskedBody');
-        }
 
         final response = await dio.post(
           ApiEndpoints.createUser, // "/user/"
@@ -110,14 +64,6 @@ class UserRemoteDataSource {
           final createdUser = UserAPIModel.fromJson(response.data as Map<String, dynamic>);
           return Right(createdUser);
         } else {
-          // Try to extract any error detail, print debug info when available
-          if (kDebugMode) {
-            print(
-              '⬅️ CreateUser response (${response.statusCode}) statusMessage: ${response.statusMessage}',
-            );
-            print('⬅️ Response headers: ${response.headers}');
-            print('⬅️ Response data: ${response.data}');
-          }
           final errorMsg =
               (response.data is Map && response.data['detail'] != null)
                   ? response.data['detail']?.toString()
@@ -127,10 +73,6 @@ class UserRemoteDataSource {
           );
         }
       } on DioException catch (e) {
-        if (kDebugMode) {
-          print('⬅️ DioException in createUser: ${e.response?.statusCode} ${e.response?.data}');
-          print('⬅️ DioException headers: ${e.response?.headers}');
-        }
         return Left(
           Failure(
             error: e.response?.data?.toString() ?? e.message ?? 'Unknown Dio error',
@@ -146,9 +88,10 @@ class UserRemoteDataSource {
   /// Get all users (Superuser only)
   Future<Either<Failure, List<UserAPIModel>>> getAllUsers({int skip = 0, int limit = 100}) async {
     final tokenResult = await _getValidToken();
-
+    print('Token result in getAllUsers: $tokenResult');
     return tokenResult.fold((failure) => Left(failure), (token) async {
       try {
+        print('Using token: $token');
         final response = await dio.get(
           ApiEndpoints.getUsers, // "/user/"
           queryParameters: {'skip': skip, 'limit': limit},
@@ -163,12 +106,13 @@ class UserRemoteDataSource {
               data.map((json) => UserAPIModel.fromJson(json as Map<String, dynamic>)).toList();
           return Right(users);
         } else {
-          return Left(
-            Failure(
-              error: response.data['detail']?.toString() ?? 'Unknown error',
-              statusCode: response.statusCode ?? 0,
-            ),
-          );
+          String msg;
+          if (response.data['detail'] == "Not found") {
+            msg = "";
+          } else {
+            msg = "Failed to fetch users";
+          }
+          return Left(Failure(error: msg, statusCode: response.statusCode ?? 0));
         }
       } on DioException catch (e) {
         return Left(
@@ -190,7 +134,7 @@ class UserRemoteDataSource {
     return tokenResult.fold((failure) => Left(failure), (token) async {
       try {
         final response = await dio.get(
-          '${ApiEndpoints.getUsers}/$userId', // e.g. "/user/3"
+          ApiEndpoints.getUserById(userId.toString()), // e.g. "/user/3"
           options: Options(
             headers: {"accept": "application/json", "Authorization": "Bearer $token"},
           ),
@@ -244,7 +188,7 @@ class UserRemoteDataSource {
         };
 
         final response = await dio.put(
-          '${ApiEndpoints.getUsers}/$userId',
+          ApiEndpoints.updateUser(userId.toString()),
           data: body,
           options: Options(
             headers: {

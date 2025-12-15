@@ -1,6 +1,5 @@
 // ignore_for_file: use_build_context_synchronously
 
-import 'package:cammate/core/common/appbar/my_snackbar.dart';
 import 'package:cammate/core/shared_pref/user_shared_prefs.dart';
 import 'package:cammate/features/activity/domain/usecase/activity_use_case.dart';
 import 'package:cammate/features/activity/presentation/state/activity_state.dart';
@@ -44,7 +43,7 @@ class ActivityViewModel extends StateNotifier<ActivityState> {
             isLoading: false,
             error: failure.error,
             showMessage: true,
-            message: failure.error,
+            message: 'Failed to load activities',
           );
         },
         (activities) {
@@ -88,13 +87,15 @@ class ActivityViewModel extends StateNotifier<ActivityState> {
       );
       result.fold(
         (failure) {
-          state = state.copyWith(isLoading: false, error: failure.error, showMessage: true);
-          if (context != null)
-            showMySnackBar(message: failure.error, context: context, color: Colors.red[900]);
+          state = state.copyWith(
+            isLoading: false,
+            error: failure.error,
+            showMessage: true,
+            message: failure.error,
+          );
         },
         (activity) {
           state = state.copyWith(isLoading: false, message: 'Activity created', showMessage: true);
-          if (context != null) showMySnackBar(message: 'Activity created', context: context);
           if (context != null) Navigator.pop(context);
           Future.microtask(() => fetchActivities());
         },
@@ -124,14 +125,16 @@ class ActivityViewModel extends StateNotifier<ActivityState> {
       var success = false;
       result.fold(
         (failure) {
-          state = state.copyWith(isLoading: false, error: failure.error, showMessage: true);
-          if (context != null)
-            showMySnackBar(message: failure.error, context: context, color: Colors.red[900]);
+          state = state.copyWith(
+            isLoading: false,
+            error: failure.error,
+            showMessage: true,
+            message: failure.error,
+          );
           success = false;
         },
         (activity) {
           state = state.copyWith(isLoading: false, message: 'Activity updated', showMessage: true);
-          if (context != null) showMySnackBar(message: 'Activity updated', context: context);
           Future.microtask(() => fetchActivities());
           success = true;
         },
@@ -149,13 +152,15 @@ class ActivityViewModel extends StateNotifier<ActivityState> {
       final result = await activityUseCase.deleteActivity(activityId);
       result.fold(
         (failure) {
-          state = state.copyWith(isLoading: false, error: failure.error, showMessage: true);
-          if (context != null)
-            showMySnackBar(message: failure.error, context: context, color: Colors.red[900]);
+          state = state.copyWith(
+            isLoading: false,
+            error: failure.error,
+            showMessage: true,
+            message: failure.error,
+          );
         },
         (msg) {
           state = state.copyWith(isLoading: false, message: msg, showMessage: true);
-          if (context != null) showMySnackBar(message: msg, context: context);
           Future.microtask(() => fetchActivities());
         },
       );

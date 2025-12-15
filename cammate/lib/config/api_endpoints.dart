@@ -20,7 +20,7 @@ class ApiEndpoints {
   static const String validateSession = "$authBase/validate-session";
 
   // Users
-  static const String usersBase = "/user";
+  static const String usersBase = "/users";
   static const String createUser = "$usersBase/";
   static const String getUsers = "$usersBase/";
   static String getUserById(String id) => "$usersBase/$id";

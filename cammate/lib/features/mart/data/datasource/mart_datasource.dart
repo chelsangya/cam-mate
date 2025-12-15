@@ -24,42 +24,13 @@ class MartRemoteDataSource {
   Future<Either<Failure, String>> _getValidToken() async {
     final tokenEither = await userSharedPrefs.getUserToken();
     String? token = tokenEither.fold((_) => null, (t) => t);
-
     if (token == null || token.isEmpty) {
       return Left(Failure(error: 'User is not authenticated', statusCode: 401));
     }
-
     if (JwtDecoder.isExpired(token)) {
-      final refreshResult = await _refreshToken(token);
-      if (refreshResult.isLeft()) {
-        print('Token refresh failed inside datasource mart $refreshResult');
-
-        return Left(Failure(error: 'Token expired and refresh failed', statusCode: 401));
-      } else {
-        token = refreshResult.getOrElse(() => '');
-      }
-    }
-
-    return Right(token);
-  }
-
-  Future<Either<Failure, String>> _refreshToken(String expiredToken) async {
-    try {
-      final response = await dio.post(
-        ApiEndpoints.refreshToken,
-        data: {"refresh_token": expiredToken},
-        options: Options(headers: {'Content-Type': 'application/json'}),
-      );
-
-      if (response.statusCode == 200 && response.data['access_token'] != null) {
-        final newToken = response.data['access_token'] as String;
-        await userSharedPrefs.setUserToken(newToken);
-        return Right(newToken);
-      }
-
-      return Left(Failure(error: 'Token refresh failed', statusCode: response.statusCode ?? 0));
-    } catch (e) {
-      return Left(Failure(error: e.toString()));
+      return Left(Failure(error: 'Token expired', statusCode: 401));
+    } else {
+      return Right(token);
     }
   }
 
@@ -83,10 +54,7 @@ class MartRemoteDataSource {
           return Right(MartAPIModel.fromJson(response.data as Map<String, dynamic>));
         } else {
           return Left(
-            Failure(
-              error: response.data['detail']?.toString() ?? 'Unknown error',
-              statusCode: response.statusCode ?? 0,
-            ),
+            Failure(error: "Could not create mart", statusCode: response.statusCode ?? 0),
           );
         }
       } on DioException catch (e) {
@@ -118,10 +86,7 @@ class MartRemoteDataSource {
           return Right(marts);
         } else {
           return Left(
-            Failure(
-              error: response.data['detail']?.toString() ?? 'Unknown error',
-              statusCode: response.statusCode ?? 0,
-            ),
+            Failure(error: 'Could not fetch marts', statusCode: response.statusCode ?? 0),
           );
         }
       } on DioException catch (e) {
@@ -135,7 +100,7 @@ class MartRemoteDataSource {
     return tokenResult.fold((failure) => Left(failure), (token) async {
       try {
         final response = await dio.get(
-          '${ApiEndpoints.getMart}/$martId',
+          ApiEndpoints.getMart(martId.toString()),
           options: Options(
             headers: {"accept": "application/json", "Authorization": "Bearer $token"},
           ),
@@ -144,12 +109,7 @@ class MartRemoteDataSource {
         if (response.statusCode == 200) {
           return Right(MartAPIModel.fromJson(response.data as Map<String, dynamic>));
         } else {
-          return Left(
-            Failure(
-              error: response.data['detail']?.toString() ?? 'Unknown error',
-              statusCode: response.statusCode ?? 0,
-            ),
-          );
+          return Left(Failure(error: 'Could not fetch mart', statusCode: response.statusCode ?? 0));
         }
       } on DioException catch (e) {
         return Left(Failure(error: e.error.toString(), statusCode: e.response?.statusCode ?? 0));

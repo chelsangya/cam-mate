@@ -1,5 +1,5 @@
 import 'package:cammate/config/approutes.dart';
-import 'package:cammate/core/common/appbar/my_snackbar.dart';
+// snackbar UI is handled by views; viewmodels only set state.message/showMessage
 import 'package:cammate/core/shared_pref/user_shared_prefs.dart';
 import 'package:cammate/features/auth/domain/entity/auth_entity.dart';
 import 'package:cammate/features/auth/domain/usecase/auth_use_case.dart';
@@ -30,8 +30,12 @@ class AuthViewModel extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false);
       result.fold(
         (failure) {
-          state = state.copyWith(error: failure.error, isLoading: false, showMessage: true);
-          showMySnackBar(message: state.error!, context: context, color: Colors.red[900]);
+          state = state.copyWith(
+            error: failure.error,
+            isLoading: false,
+            showMessage: true,
+            message: failure.error,
+          );
         },
         (success) {
           state = state.copyWith(
@@ -40,7 +44,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
             showMessage: true,
             error: null,
           );
-          showMySnackBar(message: state.message!, context: context);
           Navigator.popAndPushNamed(context, AppRoute.verifyEmailRoute, arguments: auth);
         },
       );
@@ -104,8 +107,19 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
       result.fold(
         (failure) {
-          state = state.copyWith(error: 'VM ${failure.error}', isLoading: false, showMessage: true);
-          showMySnackBar(message: state.error!, context: context, color: Colors.red[900]);
+          print('Login failed: ${failure.error}');
+          String msg;
+          if (failure.error.contains("Unauthorized")) {
+            msg = "Invalid username or password";
+          } else {
+            msg = "Login failed. Please try again later.";
+          }
+          state = state.copyWith(
+            error: msg,
+            isLoading: false,
+            showMessage: true,
+            message: 'Login failed',
+          );
         },
         (success) {
           state = state.copyWith(
@@ -114,16 +128,35 @@ class AuthViewModel extends StateNotifier<AuthState> {
             showMessage: true,
             error: null,
           );
-          showMySnackBar(message: success, context: context);
           // getUserById();
-          final role = userSharedPrefs.getUserRole();
-          if (role == 'superuser' || role == 'SUPERUSER') {
-            Navigator.of(
-              context,
-            ).pushNamedAndRemoveUntil(AppRoute.superUserHomeRoute, (route) => false);
-            return;
-          }
-          Navigator.pushNamedAndRemoveUntil(context, AppRoute.superUserHomeRoute, (route) => false);
+          // userSharedPrefs.getUserRole() returns a Future<Either<Failure, String?>>
+          // so unwrap it asynchronously and then navigate based on role value.
+          userSharedPrefs.getUserRole().then((roleEither) {
+            roleEither.fold(
+              (failure) {
+                // couldn't read role; fall back to default route
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoute.superUserHomeRoute,
+                  (route) => false,
+                );
+              },
+              (role) {
+                final lower = role?.toLowerCase() ?? '';
+                if (lower == 'superuser') {
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil(AppRoute.superUserHomeRoute, (route) => false);
+                  return;
+                }
+                Navigator.pushNamedAndRemoveUntil(
+                  context,
+                  AppRoute.superUserHomeRoute,
+                  (route) => false,
+                );
+              },
+            );
+          });
         },
       );
     } catch (e) {
@@ -193,8 +226,12 @@ class AuthViewModel extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false);
       return await result.fold(
         (failure) async {
-          state = state.copyWith(error: failure.error, isLoading: false, showMessage: true);
-          showMySnackBar(message: state.error!, context: context, color: Colors.red[900]);
+          state = state.copyWith(
+            error: failure.error,
+            isLoading: false,
+            showMessage: true,
+            message: failure.error,
+          );
           return null;
         },
         (success) async {
@@ -207,7 +244,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
             showMessage: true,
             error: null,
           );
-          showMySnackBar(message: state.message!, context: context);
           return resp;
         },
       );
@@ -228,8 +264,12 @@ class AuthViewModel extends StateNotifier<AuthState> {
       state = state.copyWith(isLoading: false);
       result.fold(
         (failure) {
-          state = state.copyWith(error: failure.error, isLoading: false, showMessage: true);
-          showMySnackBar(message: state.error!, context: context, color: Colors.red[900]);
+          state = state.copyWith(
+            error: failure.error,
+            isLoading: false,
+            showMessage: true,
+            message: failure.error,
+          );
         },
         (success) {
           state = state.copyWith(
@@ -238,7 +278,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
             showMessage: true,
             error: null,
           );
-          showMySnackBar(message: state.message!, context: context);
           // After resetting password, route user back to login
           Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
         },
@@ -270,7 +309,6 @@ class AuthViewModel extends StateNotifier<AuthState> {
                   ? failure.error
                   : 'Could not change password. Please try again later.';
           state = state.copyWith(error: msg, isLoading: false, showMessage: true, message: msg);
-          showMySnackBar(message: msg, context: context, color: Colors.red[900]);
         },
         (successMap) {
           // successMap may contain a message
@@ -281,14 +319,17 @@ class AuthViewModel extends StateNotifier<AuthState> {
             showMessage: true,
             error: null,
           );
-          showMySnackBar(message: message, context: context);
           // After changing password, it's reasonable to navigate back to profile/login
           Navigator.pop(context);
         },
       );
     } catch (e) {
-      state = state.copyWith(error: 'Error changing password', isLoading: false, showMessage: true);
-      showMySnackBar(message: 'Error changing password', context: context, color: Colors.red[900]);
+      state = state.copyWith(
+        error: 'Error changing password',
+        isLoading: false,
+        showMessage: true,
+        message: 'Error changing password',
+      );
     }
   }
 
@@ -302,9 +343,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
 
   void logout(BuildContext context) async {
     // show a brief loading state, clear tokens, then navigate to login
-    state = state.copyWith(isLoading: true);
-
-    showMySnackBar(message: 'See you soon. Bye!!', context: context);
+    state = state.copyWith(isLoading: true, showMessage: true, message: 'See you soon. Bye!!');
 
     await userSharedPrefs.deleteUserToken();
     Future.delayed(const Duration(milliseconds: 1000), () {
@@ -313,16 +352,19 @@ class AuthViewModel extends StateNotifier<AuthState> {
       Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
     });
   }
-      void checkRefresh(BuildContext context, String message) {
-    if (message.contains("Token has expired") ||
+
+  void checkRefresh(BuildContext context, String message) {
+    if (message.contains("Token expired") ||
         message.contains("Token expired and refresh failed") ||
         message.contains("Invalid token")) {
-      // show snackbar
-      showMySnackBar(context: context, message: "The session has expired. Please log in again.");
+      // set a message and logout; UI can choose how to show it
+      state = state.copyWith(
+        showMessage: true,
+        message: "The session has expired. Please log in again.",
+      );
       logout(context);
     }
   }
-
 
   void resetMessage(bool value) {
     state = state.copyWith(showMessage: false, error: null, isLoading: false);

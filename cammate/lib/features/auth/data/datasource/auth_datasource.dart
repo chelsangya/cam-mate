@@ -25,67 +25,71 @@ class AuthRemoteDataSource {
   Future<Either<Failure, String>> _getValidToken() async {
     final tokenEither = await userSharedPrefs.getUserToken();
     String? token = tokenEither.fold((_) => null, (t) => t);
-
     if (token == null || token.isEmpty) {
       return Left(Failure(error: 'User is not authenticated', statusCode: 401));
     }
-
     if (JwtDecoder.isExpired(token)) {
-      final refreshResult = await _refreshToken(token);
-      if (refreshResult.isLeft()) {
-        print('Token refresh failed inside datasource auth $refreshResult');
-        return Left(Failure(error: 'Token expired and refresh failed', statusCode: 401));
-      } else {
-        token = refreshResult.getOrElse(() => '');
-      }
-    }
-
-    return Right(token);
-  }
-
-  Future<Either<Failure, String>> _refreshToken(String expiredToken) async {
-    try {
-      final response = await dio.post(
-        ApiEndpoints.refreshToken,
-        data: {"refresh_token": expiredToken},
-        options: Options(headers: {'Content-Type': 'application/json'}),
-      );
-
-      if (response.statusCode == 200 && response.data['access_token'] != null) {
-        final newToken = response.data['access_token'] as String?;
-        if (newToken == null || newToken.isEmpty) {
-          return Left(Failure(error: 'Empty token received during refresh', statusCode: 400));
-        }
-
-        await userSharedPrefs.setUserToken(newToken);
-        return Right(newToken);
-      } else if (response.statusCode == 403) {
-        // Token is invalid or expired, clear it
-        await userSharedPrefs.deleteUserToken();
-        return Left(
-          Failure(error: 'Refresh token expired or invalid. Please log in again.', statusCode: 403),
-        );
-      } else {
-        final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-        return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-      }
-    } catch (e) {
-      print('Error during token refresh: $e');
-      return Left(Failure(error: e.toString(), statusCode: 500));
+      return Left(Failure(error: 'Token expired', statusCode: 401));
+    } else {
+      return Right(token);
     }
   }
+  // Future<Either<Failure, String>> _refreshToken(String expiredToken) async {
+  //   try {
+  //     final response = await dio.post(
+  //       ApiEndpoints.refreshToken,
+  //       data: {"refresh_token": expiredToken},
+  //       options: Options(headers: {'Content-Type': 'application/json'}),
+  //     );
+
+  //     if (response.statusCode == 200 && response.data['access_token'] != null) {
+  //       final newToken = response.data['access_token'] as String?;
+  //       if (newToken == null || newToken.isEmpty) {
+  //         return Left(Failure(error: 'Empty token received during refresh', statusCode: 400));
+  //       }
+
+  //       await userSharedPrefs.setUserToken(newToken);
+  //       return Right(newToken);
+  //     } else if (response.statusCode == 403) {
+  //       // Token is invalid or expired, clear it
+  //       await userSharedPrefs.deleteUserToken();
+  //       return Left(
+  //         Failure(error: 'Refresh token expired or invalid. Please log in again.', statusCode: 403),
+  //       );
+  //     } else {
+  //       final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
+  //       return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
+  //     }
+  //   } catch (e) {
+  //     print('Error during token refresh: $e');
+  //     return Left(Failure(error: e.toString(), statusCode: 500));
+  //   }
+  // }
 
   Future<Either<Failure, String>> registerUser(AuthEntity auth) async {
     try {
       AuthAPIModel authAPIModel = AuthAPIModel.fromEntity(auth);
       var response = await dio.post(ApiEndpoints.createUser, data: authAPIModel.toJson());
       if (response.data['status'] == 200) {
-        String message = response.data['data']['message'];
+        final respMap =
+            response.data is Map
+                ? Map<String, dynamic>.from(response.data)
+                : {'message': response.data.toString()};
+        final message =
+            respMap['data'] is Map
+                ? (respMap['data']['message']?.toString() ??
+                    respMap['message']?.toString() ??
+                    respMap.toString())
+                : (respMap['message']?.toString() ?? respMap.toString());
         return Right(message);
       } else {
-        return Left(
-          Failure(error: response.data['data']['error'], statusCode: response.data['status']),
-        );
+        final err =
+            response.data is Map
+                ? (response.data['data']?['error']?.toString() ??
+                    response.data['detail']?.toString() ??
+                    response.data.toString())
+                : response.data.toString();
+        return Left(Failure(error: err, statusCode: response.data['status'] ?? 0));
       }
     } on DioException catch (e) {
       return Left(
@@ -146,22 +150,25 @@ class AuthRemoteDataSource {
         final role = (response.data['role'] as String?)?.toLowerCase() ?? '';
         final firstName = response.data['first_name'] as String? ?? '';
         final lastName = response.data['last_name'] as String? ?? '';
-        // Some backends use `uid` while others use `user_id` or `userId`.
-        final uid = (response.data['uid'] ?? response.data['user_id'] ?? response.data['userId'])?.toString() ?? '';
-        final email = response.data['email'] as String? ?? '';
+
+        final uid =
+            (response.data['uid'] ?? response.data['user_id'] ?? response.data['userId'])
+                ?.toString() ??
+            '';
+        final user = {
+          'username': username,
+          'first_name': firstName,
+          'last_name': lastName,
+          'userId': uid,
+          'role': role,
+        };
+        print('USER DATA AFTER LOGIN: $user');
 
         if (token.isEmpty) {
           return Left(Failure(error: 'Empty access token received', statusCode: 500));
         }
 
         await userSharedPrefs.setUserToken(token);
-        final user = {
-          'username': username,
-          'first_name': firstName,
-          'last_name': lastName,
-          'uid': uid,
-          'email': email,
-        };
         await userSharedPrefs.setUserRole(role);
         await userSharedPrefs.setUser(user);
 
@@ -320,12 +327,25 @@ class AuthRemoteDataSource {
         data: {"username": username, "otp": otp, "newPassword": password},
       );
       if (response.data['status'] == 200) {
-        String message = response.data['data']['message'];
+        final respMap =
+            response.data is Map
+                ? Map<String, dynamic>.from(response.data)
+                : {'message': response.data.toString()};
+        final message =
+            respMap['data'] is Map
+                ? (respMap['data']['message']?.toString() ??
+                    respMap['message']?.toString() ??
+                    respMap.toString())
+                : (respMap['message']?.toString() ?? respMap.toString());
         return Right(message);
       } else {
-        return Left(
-          Failure(error: response.data['data']['error'], statusCode: response.data['status']),
-        );
+        final err =
+            response.data is Map
+                ? (response.data['data']?['error']?.toString() ??
+                    response.data['detail']?.toString() ??
+                    response.data.toString())
+                : response.data.toString();
+        return Left(Failure(error: err, statusCode: response.data['status'] ?? 0));
       }
     } on DioException catch (e) {
       return Left(

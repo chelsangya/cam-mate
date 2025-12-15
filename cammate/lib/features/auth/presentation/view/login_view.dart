@@ -1,5 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
+import 'package:cammate/features/auth/presentation/state/auth_state.dart';
 import 'package:cammate/features/auth/presentation/view_model/auth_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -22,6 +23,10 @@ class _LoginViewState extends ConsumerState<LoginView> {
       _passwordVisible = !_passwordVisible;
     });
   }
+
+  // Note: we must not call `ref.listen` in initState for ConsumerStatefulWidget
+  // because Riverpod requires `ref.listen` to be used inside build for
+  // Consumer widgets. The listener is added inside `build` below.
 
   String? validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) return 'Please enter an email address';
@@ -231,7 +236,32 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   @override
   Widget build(BuildContext context) {
+    // Watch state and also install a listener here (legal with Riverpod).
     final authState = ref.watch(authViewModelProvider);
+    ref.listen<AuthState>(authViewModelProvider, (previous, next) {
+      final showPrev = previous?.showMessage ?? false;
+      final showNow = next.showMessage;
+      if (!showPrev && showNow) {
+        final text = next.error ?? next.message ?? '';
+        if (text.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            final isCurrent = ModalRoute.of(context)?.isCurrent ?? false;
+            if (!isCurrent) {
+              ref.read(authViewModelProvider.notifier).resetMessage(false);
+              return;
+            }
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(text),
+                backgroundColor: next.error != null ? Colors.red : Colors.green,
+              ),
+            );
+            ref.read(authViewModelProvider.notifier).resetMessage(false);
+          });
+        }
+      }
+    });
 
     return Scaffold(
       body: Container(

@@ -59,7 +59,7 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
     }
 
     // Token exists and is valid
-    _navigateToHome();
+    await _navigateToHome();
   }
 
   Future<String?> _refreshToken(String expiredToken) async {
@@ -71,7 +71,8 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
       );
 
       if (response.statusCode == 200 && response.data['access_token'] != null) {
-        final newToken = response.data['access_token'] as String;
+        final newToken = response.data['access_token'] as String?;
+        if (newToken == null || newToken.isEmpty) return null;
 
         await userSharedPrefs.setUserToken(newToken);
 
@@ -88,14 +89,23 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
     Navigator.of(context).pushReplacementNamed(AppRoute.loginRoute);
   }
 
-  void _navigateToHome() {
-    final role = userSharedPrefs.getUserRole();
-    print('User role in splash: $role');
-    if (role == 'superuser' || role == 'SUPERUSER') {
-      Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
-      return;
-    }
-    Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
+  Future<void> _navigateToHome() async {
+    // userSharedPrefs.getUserRole() returns Future<Either<Failure, String?>>
+    final roleEither = await userSharedPrefs.getUserRole();
+    roleEither.fold(
+      (failure) {
+        // couldn't read role; default to home
+        Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
+      },
+      (role) {
+        final lower = role?.toLowerCase() ?? '';
+        if (lower == 'superuser') {
+          Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
+          return;
+        }
+        Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
+      },
+    );
   }
 
   @override

@@ -24,45 +24,14 @@ class ActivityRemoteDataSource {
   Future<Either<Failure, String>> _getValidToken() async {
     final tokenEither = await userSharedPrefs.getUserToken();
     String? token = tokenEither.fold((_) => null, (t) => t);
-
     if (token == null || token.isEmpty) {
       return Left(Failure(error: 'User is not authenticated', statusCode: 401));
     }
-
     if (JwtDecoder.isExpired(token)) {
-      final refreshResult = await _refreshToken(token);
-      if (refreshResult.isLeft()) {
-        return Left(Failure(error: 'Token expired and refresh failed', statusCode: 401));
-      } else {
-        token = refreshResult.getOrElse(() => '');
-      }
-    }
-
-    return Right(token);
-  }
-
-  Future<Either<Failure, String>> _refreshToken(String expiredToken) async {
-    try {
-      final response = await dio.post(
-        ApiEndpoints.refreshToken,
-        data: {"refresh_token": expiredToken},
-        options: Options(headers: {'Content-Type': 'application/json'}),
-      );
-
-      if (response.statusCode == 200 && response.data['access_token'] != null) {
-        final newToken = response.data['access_token'] as String?;
-        if (newToken == null || newToken.isEmpty) {
-          return Left(Failure(error: 'Empty token received during refresh', statusCode: 400));
-        }
-
-        await userSharedPrefs.setUserToken(newToken);
-        return Right(newToken);
-      } else {
-        final errorMsg = response.data['detail']?.toString() ?? 'Unknown error';
-        return Left(Failure(error: errorMsg, statusCode: response.statusCode ?? 0));
-      }
-    } catch (e) {
-      return Left(Failure(error: e.toString(), statusCode: 500));
+      // Try to refresh token if expired
+      return Left(Failure(error: 'Token expired', statusCode: 401));
+    } else {
+      return Right(token);
     }
   }
 

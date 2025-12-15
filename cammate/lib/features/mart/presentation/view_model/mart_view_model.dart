@@ -1,7 +1,6 @@
 // ignore_for_file: use_build_context_synchronously
 
 import 'package:cammate/config/approutes.dart';
-import 'package:cammate/core/common/appbar/my_snackbar.dart';
 import 'package:cammate/core/shared_pref/user_shared_prefs.dart';
 import 'package:cammate/features/mart/data/model/mart_model.dart';
 import 'package:cammate/features/mart/domain/usecase/mart_use_case.dart';
@@ -33,8 +32,12 @@ class MartViewModel extends StateNotifier<MartState> {
       result.fold(
         (failure) {
           checkRefresh(context, failure.error);
-          state = state.copyWith(error: failure.error, isLoading: false, showMessage: true);
-          showMySnackBar(message: state.error!, context: context, color: Colors.red[900]);
+          state = state.copyWith(
+            error: failure.error,
+            isLoading: false,
+            showMessage: true,
+            message: failure.error,
+          );
         },
         (success) {
           // On success: notify user, close create screen and refresh the list
@@ -44,7 +47,6 @@ class MartViewModel extends StateNotifier<MartState> {
             showMessage: true,
             error: null,
           );
-          showMySnackBar(message: state.message ?? 'Mart created', context: context);
           Navigator.pop(context); // close create screen
           // refresh the mart list
           Future.microtask(() => fetchAllMarts(context));
@@ -168,7 +170,7 @@ class MartViewModel extends StateNotifier<MartState> {
   // }
 
   /// Fetch all marts and update state.marts
-  Future<void> fetchAllMarts(BuildContext context,{int skip = 0, int limit = 100}) async {
+  Future<void> fetchAllMarts(BuildContext context, {int skip = 0, int limit = 100}) async {
     try {
       state = state.copyWith(isLoading: true, error: null);
       final result = await martUseCase.getAllMarts(skip: skip, limit: limit);
@@ -198,9 +200,7 @@ class MartViewModel extends StateNotifier<MartState> {
   }
 
   void logout(BuildContext context) async {
-    state = state.copyWith(isLoading: true);
-
-    showMySnackBar(message: 'See you soon. Bye!!', context: context);
+    state = state.copyWith(isLoading: true, showMessage: true, message: 'See you soon. Bye!!');
 
     await userSharedPrefs.deleteUserToken();
     Future.delayed(const Duration(milliseconds: 1000), () {
@@ -210,11 +210,13 @@ class MartViewModel extends StateNotifier<MartState> {
   }
 
   void checkRefresh(BuildContext context, String message) {
-    if (message.contains("Token has expired") ||
+    if (message.contains("Token expired") ||
         message.contains("Token expired and refresh failed") ||
         message.contains("Invalid token")) {
-      // show snackbar
-      showMySnackBar(context: context, message: "The session has expired. Please log in again.");
+      state = state.copyWith(
+        showMessage: true,
+        message: "The session has expired. Please log in again.",
+      );
       logout(context);
     }
   }
