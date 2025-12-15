@@ -23,6 +23,7 @@ class UserDetailView extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final isSuperUser = user.role.toLowerCase() == 'superuser';
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
       appBar: myCustomAppBar(context, '${user.firstName} ${user.lastName}'),
@@ -57,117 +58,128 @@ class UserDetailView extends ConsumerWidget {
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () async {
-                          // open edit dialog
-                          await showDialog<bool>(
-                            context: context,
-                            builder: (ctx) {
-                              final emailController = TextEditingController(text: user.email);
-                              final firstController = TextEditingController(text: user.firstName);
-                              final lastController = TextEditingController(text: user.lastName);
-                              final roleController = TextEditingController(text: user.role);
-                              final martController = TextEditingController(
-                                text: user.martId?.toString() ?? '',
-                              );
-                              bool isActive = user.isActive ?? true;
+                      // Only show edit action for non-superusers.
+                      if (!isSuperUser)
+                        Tooltip(
+                          message: 'Edit user',
+                          child: IconButton(
+                            onPressed: () async {
+                              // open edit dialog
+                              await showDialog<bool>(
+                                context: context,
+                                builder: (ctx) {
+                                  final emailController = TextEditingController(text: user.email);
+                                  final firstController = TextEditingController(
+                                    text: user.firstName,
+                                  );
+                                  final lastController = TextEditingController(text: user.lastName);
+                                  final roleController = TextEditingController(text: user.role);
+                                  final martController = TextEditingController(
+                                    text: user.martId?.toString() ?? '',
+                                  );
+                                  bool isActive = user.isActive ?? true;
 
-                              return StatefulBuilder(
-                                builder: (ctx2, setState2) {
-                                  return AlertDialog(
-                                    title: const Text('Edit User'),
-                                    content: SingleChildScrollView(
-                                      child: Column(
-                                        children: [
-                                          TextField(
-                                            controller: emailController,
-                                            decoration: const InputDecoration(labelText: 'Email'),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: firstController,
-                                            decoration: const InputDecoration(
-                                              labelText: 'First name',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: lastController,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Last name',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: roleController,
-                                            decoration: const InputDecoration(labelText: 'Role'),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: martController,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Mart ID (optional)',
-                                            ),
-                                            keyboardType: TextInputType.number,
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Row(
+                                  return StatefulBuilder(
+                                    builder: (ctx2, setState2) {
+                                      return AlertDialog(
+                                        title: const Text('Edit User'),
+                                        content: SingleChildScrollView(
+                                          child: Column(
                                             children: [
-                                              Checkbox(
-                                                value: isActive,
-                                                onChanged:
-                                                    (v) => setState2(() => isActive = v ?? true),
+                                              TextField(
+                                                controller: emailController,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Email',
+                                                ),
                                               ),
-                                              const SizedBox(width: 8),
-                                              const Text('Active'),
+                                              const SizedBox(height: 8),
+                                              TextField(
+                                                controller: firstController,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'First name',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              TextField(
+                                                controller: lastController,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Last name',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              TextField(
+                                                controller: roleController,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Role',
+                                                ),
+                                              ),
+                                              const SizedBox(height: 8),
+                                              TextField(
+                                                controller: martController,
+                                                decoration: const InputDecoration(
+                                                  labelText: 'Mart ID (optional)',
+                                                ),
+                                                keyboardType: TextInputType.number,
+                                              ),
+                                              const SizedBox(height: 8),
+                                              Row(
+                                                children: [
+                                                  Checkbox(
+                                                    value: isActive,
+                                                    onChanged:
+                                                        (v) =>
+                                                            setState2(() => isActive = v ?? true),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  const Text('Active'),
+                                                ],
+                                              ),
                                             ],
                                           ),
-                                        ],
-                                      ),
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () => Navigator.pop(ctx2, false),
-                                        child: const Text('Cancel'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () async {
-                                          final updated = UserAPIModel(
-                                            id: user.id,
-                                            email: emailController.text.trim(),
-                                            firstName: firstController.text.trim(),
-                                            lastName: lastController.text.trim(),
-                                            role: roleController.text.trim(),
-                                            isActive: isActive,
-                                            martId:
-                                                martController.text.trim().isEmpty
-                                                    ? null
-                                                    : int.tryParse(martController.text.trim()),
-                                            createdById: user.createdById,
-                                            createdAt: user.createdAt,
-                                            updatedAt: DateTime.now(),
-                                          );
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx2, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          TextButton(
+                                            onPressed: () async {
+                                              final updated = UserAPIModel(
+                                                id: user.id,
+                                                email: emailController.text.trim(),
+                                                firstName: firstController.text.trim(),
+                                                lastName: lastController.text.trim(),
+                                                role: roleController.text.trim(),
+                                                isActive: isActive,
+                                                martId:
+                                                    martController.text.trim().isEmpty
+                                                        ? null
+                                                        : int.tryParse(martController.text.trim()),
+                                                createdById: user.createdById,
+                                                createdAt: user.createdAt,
+                                                updatedAt: DateTime.now(),
+                                              );
 
-                                          final success = await ref
-                                              .read(userViewModelProvider.notifier)
-                                              .updateUser(user.id!, updated, context);
-                                          if (success) {
-                                            Navigator.pop(ctx2, true);
-                                            Navigator.pop(context);
-                                          }
-                                        },
-                                        child: const Text('Save'),
-                                      ),
-                                    ],
+                                              final success = await ref
+                                                  .read(userViewModelProvider.notifier)
+                                                  .updateUser(user.id!, updated, context);
+                                              if (success) {
+                                                Navigator.pop(ctx2, true);
+                                                Navigator.pop(context);
+                                              }
+                                            },
+                                            child: const Text('Save'),
+                                          ),
+                                        ],
+                                      );
+                                    },
                                   );
                                 },
                               );
                             },
-                          );
-                        },
-                        icon: const Icon(Icons.edit, color: Colors.blue),
-                      ),
-                      // Deletion is not supported from the detail view.
+                            icon: const Icon(Icons.edit, color: Colors.blue),
+                          ),
+                        ),
                     ],
                   ),
                   const SizedBox(height: 12),
