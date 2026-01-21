@@ -1,0 +1,7 @@
+2026.01.06 20:33:28 INFO  Started: Metals version 1.6.4 in folders '/Users/sangya/Downloads/cam-mate/flutter' for client Visual Studio Code 1.107.1.
+2026.01.06 20:33:28 WARN  Using H2 2.4.240 which is newer than the version Flyway has been verified with. The latest verified version of H2 is 2.3.232.
+2026.01.06 20:33:28 WARN  no build tool detected in workspace '/Users/sangya/Downloads/cam-mate/flutter'. The most common cause for this problem is that the editor was opened in the wrong working directory, for example if you use sbt then the workspace directory should contain build.sbt. 
+2026.01.06 20:33:29 WARN  Build server is not auto-connectable.
+2026.01.07 12:59:30 INFO  Shutting down server
+2026.01.07 12:59:30 INFO  shutting down Metals
+2026.01.07 12:59:30 INFO  Exiting server

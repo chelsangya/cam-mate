@@ -81,94 +81,206 @@ class UserDetailView extends ConsumerWidget {
 
                                   return StatefulBuilder(
                                     builder: (ctx2, setState2) {
+                                      final formKey = GlobalKey<FormState>();
+                                      bool isSubmitting = false;
                                       return AlertDialog(
+                                        backgroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                                        actionsPadding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
                                         title: const Text('Edit User'),
-                                        content: SingleChildScrollView(
-                                          child: Column(
-                                            children: [
-                                              TextField(
-                                                controller: emailController,
-                                                decoration: const InputDecoration(
-                                                  labelText: 'Email',
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              TextField(
-                                                controller: firstController,
-                                                decoration: const InputDecoration(
-                                                  labelText: 'First name',
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              TextField(
-                                                controller: lastController,
-                                                decoration: const InputDecoration(
-                                                  labelText: 'Last name',
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              TextField(
-                                                controller: roleController,
-                                                decoration: const InputDecoration(
-                                                  labelText: 'Role',
-                                                ),
-                                              ),
-                                              const SizedBox(height: 8),
-                                              TextField(
-                                                controller: martController,
-                                                decoration: const InputDecoration(
-                                                  labelText: 'Mart ID (optional)',
-                                                ),
-                                                keyboardType: TextInputType.number,
-                                              ),
-                                              const SizedBox(height: 8),
-                                              Row(
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const SizedBox(height: 4),
+                                            Form(
+                                              key: formKey,
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
                                                 children: [
-                                                  Checkbox(
-                                                    value: isActive,
-                                                    onChanged:
+                                                  TextFormField(
+                                                    controller: emailController,
+                                                    decoration: InputDecoration(
+                                                      labelText: 'Email',
+                                                      filled: true,
+                                                      fillColor: Colors.grey.shade100,
+                                                      contentPadding: const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12,
+                                                      ),
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(30),
+                                                        borderSide: BorderSide.none,
+                                                      ),
+                                                    ),
+                                                    validator:
                                                         (v) =>
-                                                            setState2(() => isActive = v ?? true),
+                                                            (v == null || v.trim().isEmpty)
+                                                                ? 'Email required'
+                                                                : null,
+                                                    textInputAction: TextInputAction.next,
                                                   ),
-                                                  const SizedBox(width: 8),
-                                                  const Text('Active'),
+                                                  const SizedBox(height: 12),
+                                                  TextFormField(
+                                                    controller: firstController,
+                                                    decoration: InputDecoration(
+                                                      labelText: 'First name',
+                                                      filled: true,
+                                                      fillColor: Colors.grey.shade100,
+                                                      contentPadding: const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12,
+                                                      ),
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(30),
+                                                        borderSide: BorderSide.none,
+                                                      ),
+                                                    ),
+                                                    textInputAction: TextInputAction.next,
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  TextFormField(
+                                                    controller: lastController,
+                                                    decoration: InputDecoration(
+                                                      labelText: 'Last name',
+                                                      filled: true,
+                                                      fillColor: Colors.grey.shade100,
+                                                      contentPadding: const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12,
+                                                      ),
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(30),
+                                                        borderSide: BorderSide.none,
+                                                      ),
+                                                    ),
+                                                    textInputAction: TextInputAction.next,
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  TextFormField(
+                                                    controller: roleController,
+                                                    decoration: InputDecoration(
+                                                      labelText: 'Role',
+                                                      filled: true,
+                                                      fillColor: Colors.grey.shade100,
+                                                      contentPadding: const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12,
+                                                      ),
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(30),
+                                                        borderSide: BorderSide.none,
+                                                      ),
+                                                    ),
+                                                    textInputAction: TextInputAction.next,
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  TextFormField(
+                                                    controller: martController,
+                                                    decoration: InputDecoration(
+                                                      labelText: 'Mart ID (optional)',
+                                                      filled: true,
+                                                      fillColor: Colors.grey.shade100,
+                                                      contentPadding: const EdgeInsets.symmetric(
+                                                        horizontal: 16,
+                                                        vertical: 12,
+                                                      ),
+                                                      border: OutlineInputBorder(
+                                                        borderRadius: BorderRadius.circular(30),
+                                                        borderSide: BorderSide.none,
+                                                      ),
+                                                    ),
+                                                    keyboardType: TextInputType.number,
+                                                    textInputAction: TextInputAction.done,
+                                                  ),
+                                                  const SizedBox(height: 12),
+                                                  Row(
+                                                    children: [
+                                                      Checkbox(
+                                                        value: isActive,
+                                                        onChanged:
+                                                            (v) => setState2(
+                                                              () => isActive = v ?? true,
+                                                            ),
+                                                      ),
+                                                      const SizedBox(width: 8),
+                                                      const Text('Active'),
+                                                    ],
+                                                  ),
                                                 ],
                                               ),
-                                            ],
-                                          ),
+                                            ),
+                                          ],
                                         ),
                                         actions: [
                                           TextButton(
-                                            onPressed: () => Navigator.pop(ctx2, false),
+                                            onPressed:
+                                                isSubmitting
+                                                    ? null
+                                                    : () => Navigator.pop(ctx2, false),
                                             child: const Text('Cancel'),
                                           ),
-                                          TextButton(
-                                            onPressed: () async {
-                                              final updated = UserAPIModel(
-                                                id: user.id,
-                                                email: emailController.text.trim(),
-                                                firstName: firstController.text.trim(),
-                                                lastName: lastController.text.trim(),
-                                                role: roleController.text.trim(),
-                                                isActive: isActive,
-                                                martId:
-                                                    martController.text.trim().isEmpty
-                                                        ? null
-                                                        : int.tryParse(martController.text.trim()),
-                                                createdById: user.createdById,
-                                                createdAt: user.createdAt,
-                                                updatedAt: DateTime.now(),
-                                              );
+                                          ElevatedButton(
+                                            onPressed:
+                                                isSubmitting
+                                                    ? null
+                                                    : () async {
+                                                      final valid =
+                                                          formKey.currentState?.validate() ?? false;
+                                                      if (!valid) return;
+                                                      setState2(() => isSubmitting = true);
+                                                      final updated = UserAPIModel(
+                                                        id: user.id,
+                                                        email: emailController.text.trim(),
+                                                        firstName: firstController.text.trim(),
+                                                        lastName: lastController.text.trim(),
+                                                        role: roleController.text.trim(),
+                                                        isActive: isActive,
+                                                        martId:
+                                                            martController.text.trim().isEmpty
+                                                                ? null
+                                                                : int.tryParse(
+                                                                  martController.text.trim(),
+                                                                ),
+                                                        createdById: user.createdById,
+                                                        createdAt: user.createdAt,
+                                                        updatedAt: DateTime.now(),
+                                                      );
 
-                                              final success = await ref
-                                                  .read(userViewModelProvider.notifier)
-                                                  .updateUser(user.id!, updated, context);
-                                              if (success) {
-                                                Navigator.pop(ctx2, true);
-                                                Navigator.pop(context);
-                                              }
-                                            },
-                                            child: const Text('Save'),
+                                                      final success = await ref
+                                                          .read(userViewModelProvider.notifier)
+                                                          .updateUser(user.id!, updated, context);
+                                                      if (success) {
+                                                        Navigator.pop(ctx2, true);
+                                                        Navigator.pop(context);
+                                                      }
+                                                      setState2(() => isSubmitting = false);
+                                                    },
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: const Color(0xFF0B5FFF),
+                                              foregroundColor: Colors.white,
+                                              shape: const StadiumBorder(),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 18,
+                                                vertical: 12,
+                                              ),
+                                            ),
+                                            child:
+                                                isSubmitting
+                                                    ? const SizedBox(
+                                                      width: 20,
+                                                      height: 20,
+                                                      child: CircularProgressIndicator(
+                                                        strokeWidth: 2,
+                                                        color: Colors.white,
+                                                      ),
+                                                    )
+                                                    : const Text('Save'),
                                           ),
                                         ],
                                       );

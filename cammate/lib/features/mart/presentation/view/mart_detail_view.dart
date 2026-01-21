@@ -74,95 +74,208 @@ class MartDetailView extends ConsumerWidget {
 
                               return StatefulBuilder(
                                 builder: (ctx2, setState2) {
+                                  final formKey = GlobalKey<FormState>();
+                                  bool isSubmitting = false;
                                   return AlertDialog(
+                                    backgroundColor: Colors.white,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                                    actionsPadding: const EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 8,
+                                    ),
                                     title: const Text('Edit Mart'),
-                                    content: SingleChildScrollView(
-                                      child: Column(
-                                        children: [
-                                          TextField(
-                                            controller: nameController,
-                                            decoration: const InputDecoration(labelText: 'Name'),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: descController,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Description',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: addressController,
-                                            decoration: const InputDecoration(labelText: 'Address'),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: emailController,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Contact Email',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          TextField(
-                                            controller: phoneController,
-                                            decoration: const InputDecoration(
-                                              labelText: 'Contact Phone',
-                                            ),
-                                          ),
-                                          const SizedBox(height: 8),
-                                          Row(
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        const SizedBox(height: 4),
+                                        Form(
+                                          key: formKey,
+                                          child: Column(
+                                            mainAxisSize: MainAxisSize.min,
                                             children: [
-                                              Checkbox(
-                                                value: isActive,
-                                                onChanged:
-                                                    (v) => setState2(() => isActive = v ?? true),
+                                              TextFormField(
+                                                controller: nameController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Name',
+                                                  filled: true,
+                                                  fillColor: Colors.grey.shade100,
+                                                  contentPadding: const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(30),
+                                                    borderSide: BorderSide.none,
+                                                  ),
+                                                ),
+                                                validator:
+                                                    (v) =>
+                                                        (v == null || v.trim().isEmpty)
+                                                            ? 'Name required'
+                                                            : null,
+                                                textInputAction: TextInputAction.next,
                                               ),
-                                              const SizedBox(width: 8),
-                                              const Text('Active'),
+                                              const SizedBox(height: 12),
+                                              TextFormField(
+                                                controller: descController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Description',
+                                                  filled: true,
+                                                  fillColor: Colors.grey.shade100,
+                                                  contentPadding: const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(30),
+                                                    borderSide: BorderSide.none,
+                                                  ),
+                                                ),
+                                                textInputAction: TextInputAction.next,
+                                              ),
+                                              const SizedBox(height: 12),
+                                              TextFormField(
+                                                controller: addressController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Address',
+                                                  filled: true,
+                                                  fillColor: Colors.grey.shade100,
+                                                  contentPadding: const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(30),
+                                                    borderSide: BorderSide.none,
+                                                  ),
+                                                ),
+                                                textInputAction: TextInputAction.next,
+                                              ),
+                                              const SizedBox(height: 12),
+                                              TextFormField(
+                                                controller: emailController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Contact Email',
+                                                  filled: true,
+                                                  fillColor: Colors.grey.shade100,
+                                                  contentPadding: const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(30),
+                                                    borderSide: BorderSide.none,
+                                                  ),
+                                                ),
+                                                keyboardType: TextInputType.emailAddress,
+                                                textInputAction: TextInputAction.next,
+                                              ),
+                                              const SizedBox(height: 12),
+                                              TextFormField(
+                                                controller: phoneController,
+                                                decoration: InputDecoration(
+                                                  labelText: 'Contact Phone',
+                                                  filled: true,
+                                                  fillColor: Colors.grey.shade100,
+                                                  contentPadding: const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                                  border: OutlineInputBorder(
+                                                    borderRadius: BorderRadius.circular(30),
+                                                    borderSide: BorderSide.none,
+                                                  ),
+                                                ),
+                                                keyboardType: TextInputType.phone,
+                                                textInputAction: TextInputAction.done,
+                                              ),
+                                              const SizedBox(height: 12),
+                                              Row(
+                                                children: [
+                                                  Checkbox(
+                                                    value: isActive,
+                                                    onChanged:
+                                                        (v) =>
+                                                            setState2(() => isActive = v ?? true),
+                                                  ),
+                                                  const SizedBox(width: 8),
+                                                  const Text('Active'),
+                                                ],
+                                              ),
                                             ],
                                           ),
-                                        ],
-                                      ),
+                                        ),
+                                      ],
                                     ),
                                     actions: [
                                       TextButton(
-                                        onPressed: () => Navigator.pop(ctx2, false),
+                                        onPressed:
+                                            isSubmitting ? null : () => Navigator.pop(ctx2, false),
                                         child: const Text('Cancel'),
                                       ),
-                                      TextButton(
-                                        onPressed: () async {
-                                          final updated = MartAPIModel(
-                                            id: mart.id,
-                                            name: nameController.text.trim(),
-                                            description:
-                                                descController.text.trim().isEmpty
-                                                    ? null
-                                                    : descController.text.trim(),
-                                            address:
-                                                addressController.text.trim().isEmpty
-                                                    ? null
-                                                    : addressController.text.trim(),
-                                            contactEmail:
-                                                emailController.text.trim().isEmpty
-                                                    ? null
-                                                    : emailController.text.trim(),
-                                            contactPhone:
-                                                phoneController.text.trim().isEmpty
-                                                    ? null
-                                                    : phoneController.text.trim(),
-                                            isActive: isActive,
-                                          );
+                                      ElevatedButton(
+                                        onPressed:
+                                            isSubmitting
+                                                ? null
+                                                : () async {
+                                                  final valid =
+                                                      formKey.currentState?.validate() ?? false;
+                                                  if (!valid) return;
+                                                  setState2(() => isSubmitting = true);
+                                                  final updated = MartAPIModel(
+                                                    id: mart.id,
+                                                    name: nameController.text.trim(),
+                                                    description:
+                                                        descController.text.trim().isEmpty
+                                                            ? null
+                                                            : descController.text.trim(),
+                                                    address:
+                                                        addressController.text.trim().isEmpty
+                                                            ? null
+                                                            : addressController.text.trim(),
+                                                    contactEmail:
+                                                        emailController.text.trim().isEmpty
+                                                            ? null
+                                                            : emailController.text.trim(),
+                                                    contactPhone:
+                                                        phoneController.text.trim().isEmpty
+                                                            ? null
+                                                            : phoneController.text.trim(),
+                                                    isActive: isActive,
+                                                  );
 
-                                          final success = await ref
-                                              .read(martViewModelProvider.notifier)
-                                              .updateMart(mart.id!, updated, context);
-                                          if (success) {
-                                            Navigator.pop(ctx2, true);
-                                            // close detail view so list will reflect changes (the viewmodel triggers a refresh)
-                                            Navigator.pop(context);
-                                          }
-                                        },
-                                        child: const Text('Save'),
+                                                  final success = await ref
+                                                      .read(martViewModelProvider.notifier)
+                                                      .updateMart(mart.id!, updated, context);
+                                                  if (success) {
+                                                    Navigator.pop(ctx2, true);
+                                                    Navigator.pop(context);
+                                                  }
+                                                  setState2(() => isSubmitting = false);
+                                                },
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: const Color(0xFF0B5FFF),
+                                          foregroundColor: Colors.white,
+                                          shape: const StadiumBorder(),
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 18,
+                                            vertical: 12,
+                                          ),
+                                        ),
+                                        child:
+                                            isSubmitting
+                                                ? const SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: Colors.white,
+                                                  ),
+                                                )
+                                                : const Text('Save'),
                                       ),
                                     ],
                                   );

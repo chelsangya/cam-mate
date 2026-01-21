@@ -1,6 +1,7 @@
+import 'package:cammate/features/activity/presentation/view/activity_view.dart';
 import 'package:cammate/features/auth/presentation/view/profile_view.dart';
-import 'package:cammate/features/primary/view/customer_list.dart';
-import 'package:cammate/features/primary/view/dashboard.dart';
+import 'package:cammate/features/mart/presentation/view/my_mart_view.dart';
+import 'package:cammate/features/user/presentation/view/users_view.dart';
 import 'package:flutter/widgets.dart';
 
 class PrimaryState {
@@ -21,9 +22,9 @@ class PrimaryState {
       isLoading = false,
       // elements = [],
       lstWidgets = [
-        const DashboardScreen(),
-        const DashboardScreen(),
-        const UserList(),
+        const MyMartView(),
+        const UsersView(),
+        const ActivitiesView(),
         const ProfileView(),
       ];
 

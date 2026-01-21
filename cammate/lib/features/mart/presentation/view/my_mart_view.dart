@@ -1,0 +1,448 @@
+import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
+import 'package:cammate/features/mart/data/model/mart_model.dart';
+import 'package:cammate/features/mart/presentation/view_model/mart_view_model.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+class MyMartView extends ConsumerStatefulWidget {
+  const MyMartView({super.key});
+
+  @override
+  ConsumerState<MyMartView> createState() => _MyMartViewState();
+}
+
+class _MyMartViewState extends ConsumerState<MyMartView> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => ref.read(martViewModelProvider.notifier).fetchAllMarts(context));
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _refresh() async => ref.read(martViewModelProvider.notifier).fetchAllMarts(context);
+  Widget _infoRow(IconData icon, String label) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6.0),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: Colors.black45),
+          const SizedBox(width: 10),
+          Expanded(child: Text(label)),
+        ],
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: myCustomAppBar(context, 'Marts'),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+          child: Consumer(
+            builder: (context, ref2, _) {
+              final state = ref2.watch(martViewModelProvider);
+              if (state.isLoading) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              final mart = state.marts[0];
+              return RefreshIndicator(
+                onRefresh: _refresh,
+                // show details like in mart detail view directly
+                child: Card(
+                  color: Colors.white,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: ListView(
+                      shrinkWrap: true,
+                      children: [
+                        Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 28,
+                              backgroundColor: Colors.blue.shade50,
+                              child: Text(
+                                mart.name.isNotEmpty ? mart.name[0].toUpperCase() : '?',
+                                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                mart.name,
+                                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                              ),
+                            ),
+                            IconButton(
+                              onPressed: () async {
+                                // open edit dialog
+                                await showDialog<bool>(
+                                  context: context,
+                                  builder: (ctx) {
+                                    final nameController = TextEditingController(text: mart.name);
+                                    final descController = TextEditingController(
+                                      text: mart.description,
+                                    );
+                                    final addressController = TextEditingController(
+                                      text: mart.address,
+                                    );
+                                    final emailController = TextEditingController(
+                                      text: mart.contactEmail,
+                                    );
+                                    final phoneController = TextEditingController(
+                                      text: mart.contactPhone,
+                                    );
+                                    bool isActive = mart.isActive ?? true;
+
+                                    return StatefulBuilder(
+                                      builder: (ctx2, setState2) {
+                                        final formKey = GlobalKey<FormState>();
+                                        bool isSubmitting = false;
+                                        return AlertDialog(
+                                          backgroundColor: Colors.white,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20),
+                                          ),
+                                          contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                                          actionsPadding: const EdgeInsets.symmetric(
+                                            horizontal: 16,
+                                            vertical: 8,
+                                          ),
+                                          title: const Text('Edit Mart'),
+                                          content: Column(
+                                            mainAxisSize: MainAxisSize.min,
+                                            children: [
+                                              const Text(
+                                                'Edit the details for the mart below if needed',
+                                              ),
+                                              const SizedBox(height: 12),
+                                              Form(
+                                                key: formKey,
+                                                child: Column(
+                                                  mainAxisSize: MainAxisSize.min,
+                                                  children: [
+                                                    TextFormField(
+                                                      controller: nameController,
+                                                      decoration: InputDecoration(
+                                                        labelText: 'Name',
+                                                        filled: true,
+                                                        fillColor: Colors.grey.shade100,
+                                                        contentPadding: const EdgeInsets.symmetric(
+                                                          horizontal: 16,
+                                                          vertical: 12,
+                                                        ),
+                                                        border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(30),
+                                                          borderSide: BorderSide.none,
+                                                        ),
+                                                      ),
+                                                      validator:
+                                                          (v) =>
+                                                              (v == null || v.trim().isEmpty)
+                                                                  ? 'Name required'
+                                                                  : null,
+                                                      textInputAction: TextInputAction.next,
+                                                    ),
+                                                    const SizedBox(height: 15),
+                                                    TextFormField(
+                                                      controller: descController,
+                                                      decoration: InputDecoration(
+                                                        labelText: 'Description',
+                                                        filled: true,
+                                                        fillColor: Colors.grey.shade100,
+                                                        contentPadding: const EdgeInsets.symmetric(
+                                                          horizontal: 16,
+                                                          vertical: 12,
+                                                        ),
+                                                        border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(30),
+                                                          borderSide: BorderSide.none,
+                                                        ),
+                                                      ),
+                                                      textInputAction: TextInputAction.next,
+                                                    ),
+                                                    const SizedBox(height: 15),
+                                                    TextFormField(
+                                                      controller: addressController,
+                                                      decoration: InputDecoration(
+                                                        labelText: 'Address',
+                                                        filled: true,
+                                                        fillColor: Colors.grey.shade100,
+                                                        contentPadding: const EdgeInsets.symmetric(
+                                                          horizontal: 16,
+                                                          vertical: 12,
+                                                        ),
+                                                        border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(30),
+                                                          borderSide: BorderSide.none,
+                                                        ),
+                                                      ),
+                                                      textInputAction: TextInputAction.next,
+                                                    ),
+                                                    const SizedBox(height: 15),
+                                                    TextFormField(
+                                                      controller: emailController,
+                                                      decoration: InputDecoration(
+                                                        labelText: 'Contact Email',
+                                                        filled: true,
+                                                        fillColor: Colors.grey.shade100,
+                                                        contentPadding: const EdgeInsets.symmetric(
+                                                          horizontal: 16,
+                                                          vertical: 12,
+                                                        ),
+                                                        border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(30),
+                                                          borderSide: BorderSide.none,
+                                                        ),
+                                                      ),
+                                                      keyboardType: TextInputType.emailAddress,
+                                                      textInputAction: TextInputAction.next,
+                                                    ),
+                                                    const SizedBox(height: 15),
+                                                    TextFormField(
+                                                      controller: phoneController,
+                                                      decoration: InputDecoration(
+                                                        labelText: 'Contact Phone',
+                                                        filled: true,
+                                                        fillColor: Colors.grey.shade100,
+                                                        contentPadding: const EdgeInsets.symmetric(
+                                                          horizontal: 16,
+                                                          vertical: 12,
+                                                        ),
+                                                        border: OutlineInputBorder(
+                                                          borderRadius: BorderRadius.circular(30),
+                                                          borderSide: BorderSide.none,
+                                                        ),
+                                                      ),
+                                                      keyboardType: TextInputType.phone,
+                                                      textInputAction: TextInputAction.done,
+                                                    ),
+                                                    const SizedBox(height: 15),
+                                                    Row(
+                                                      children: [
+                                                        Checkbox(
+                                                          value: isActive,
+                                                          onChanged:
+                                                              (v) => setState2(
+                                                                () => isActive = v ?? true,
+                                                              ),
+                                                        ),
+                                                        const SizedBox(width: 8),
+                                                        const Text('Active'),
+                                                      ],
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ],
+                                          ),
+                                          actions: [
+                                            TextButton(
+                                              onPressed:
+                                                  isSubmitting
+                                                      ? null
+                                                      : () => Navigator.pop(ctx2, false),
+                                              child: const Text('Cancel'),
+                                            ),
+                                            ElevatedButton(
+                                              onPressed:
+                                                  isSubmitting
+                                                      ? null
+                                                      : () async {
+                                                        final valid =
+                                                            formKey.currentState?.validate() ??
+                                                            false;
+                                                        if (!valid) return;
+                                                        setState2(() => isSubmitting = true);
+                                                        final updated = MartAPIModel(
+                                                          id: mart.id,
+                                                          name: nameController.text.trim(),
+                                                          description:
+                                                              descController.text.trim().isEmpty
+                                                                  ? null
+                                                                  : descController.text.trim(),
+                                                          address:
+                                                              addressController.text.trim().isEmpty
+                                                                  ? null
+                                                                  : addressController.text.trim(),
+                                                          contactEmail:
+                                                              emailController.text.trim().isEmpty
+                                                                  ? null
+                                                                  : emailController.text.trim(),
+                                                          contactPhone:
+                                                              phoneController.text.trim().isEmpty
+                                                                  ? null
+                                                                  : phoneController.text.trim(),
+                                                          isActive: isActive,
+                                                        );
+
+                                                        final success = await ref
+                                                            .read(martViewModelProvider.notifier)
+                                                            .updateMart(mart.id!, updated, context);
+                                                        if (success) {
+                                                          Navigator.pop(ctx2, true);
+                                                          ScaffoldMessenger.of(
+                                                            context,
+                                                          ).showSnackBar(
+                                                            const SnackBar(
+                                                              backgroundColor: Colors.green,
+                                                              content: Text(
+                                                                'Mart updated successfully',
+                                                              ),
+                                                            ),
+                                                          );
+                                                          Navigator.pop(context);
+                                                        } else {
+                                                          Navigator.pop(ctx2, false);
+                                                          ScaffoldMessenger.of(
+                                                            context,
+                                                          ).showSnackBar(
+                                                            SnackBar(
+                                                              backgroundColor: Colors.red,
+                                                              content: Text(
+                                                                state.error ??
+                                                                    'Failed to update mart',
+                                                              ),
+                                                            ),
+                                                          );
+                                                        }
+                                                        setState2(() => isSubmitting = false);
+                                                      },
+                                              style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color(0xFF0B5FFF),
+                                                foregroundColor: Colors.white,
+                                                shape: const StadiumBorder(),
+                                                padding: const EdgeInsets.symmetric(
+                                                  horizontal: 18,
+                                                  vertical: 12,
+                                                ),
+                                              ),
+                                              child:
+                                                  isSubmitting
+                                                      ? const SizedBox(
+                                                        width: 20,
+                                                        height: 20,
+                                                        child: CircularProgressIndicator(
+                                                          strokeWidth: 2,
+                                                          color: Colors.white,
+                                                        ),
+                                                      )
+                                                      : const Text('Save'),
+                                            ),
+                                          ],
+                                        );
+                                      },
+                                    );
+                                  },
+                                );
+                              },
+                              icon: const Icon(Icons.edit, color: Colors.blue),
+                            ),
+                            IconButton(
+                              onPressed: () async {
+                                final confirmed = await showDialog<bool>(
+                                  context: context,
+                                  barrierDismissible: false,
+                                  builder:
+                                      (ctx) => AlertDialog(
+                                        backgroundColor: Colors.white,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        contentPadding: const EdgeInsets.fromLTRB(20, 20, 20, 8),
+                                        actionsPadding: const EdgeInsets.symmetric(
+                                          horizontal: 16,
+                                          vertical: 8,
+                                        ),
+                                        title: const Text('Delete mart'),
+                                        content: Column(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            const SizedBox(height: 4),
+                                            Icon(
+                                              Icons.delete_forever,
+                                              size: 48,
+                                              color: Colors.redAccent,
+                                            ),
+                                            const SizedBox(height: 12),
+                                            Text(
+                                              'Delete "${mart.name}"? This action cannot be undone.',
+                                            ),
+                                          ],
+                                        ),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(ctx, false),
+                                            child: const Text('Cancel'),
+                                          ),
+                                          ElevatedButton(
+                                            onPressed: () => Navigator.pop(ctx, true),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.redAccent,
+                                              foregroundColor: Colors.white,
+                                              shape: const StadiumBorder(),
+                                              padding: const EdgeInsets.symmetric(
+                                                horizontal: 18,
+                                                vertical: 12,
+                                              ),
+                                            ),
+                                            child: const Text('Delete'),
+                                          ),
+                                        ],
+                                      ),
+                                );
+
+                                if (confirmed != true) return;
+                                // perform delete and pop back if successful
+                                final success = await ref
+                                    .read(martViewModelProvider.notifier)
+                                    .deleteMart(mart.id!, context);
+                                if (success) Navigator.pop(context);
+                              },
+                              icon: const Icon(Icons.delete, color: Colors.red),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 12),
+                        if ((mart.description ?? '').isNotEmpty)
+                          _infoRow(Icons.description, mart.description!),
+                        if ((mart.address ?? '').isNotEmpty)
+                          _infoRow(Icons.location_on, mart.address!),
+                        if ((mart.contactEmail ?? '').isNotEmpty)
+                          _infoRow(Icons.email, mart.contactEmail!),
+                        if ((mart.contactPhone ?? '').isNotEmpty)
+                          _infoRow(Icons.phone, mart.contactPhone!),
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            const Text('Status: ', style: TextStyle(fontWeight: FontWeight.w600)),
+                            Text(
+                              mart.isActive == true ? 'Active' : 'Inactive',
+                              style: TextStyle(
+                                color: mart.isActive == true ? Colors.green : Colors.red,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
+}

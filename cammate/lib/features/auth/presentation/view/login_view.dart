@@ -40,8 +40,11 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
   String? validatePassword(String? value) {
     if (value == null || value.isEmpty) return 'Please enter a password';
-    if (value.length < 3) return 'Password cannot be less than 3 characters';
-    if (value.length > 15) return 'Password cannot be more than 15 characters';
+    if (value.length < 8) return 'Password must be at least 8 characters';
+    final hasUpper = RegExp(r'[A-Z]').hasMatch(value);
+    final hasSpecial = RegExp(r'[!@#\$%\^&\*\(\)_\+\-=\[\]{};:\\\|,.<>\/?~`]').hasMatch(value);
+    if (!hasUpper) return 'Password must contain at least one uppercase letter';
+    if (!hasSpecial) return 'Password must contain at least one special character';
     return null;
   }
 
@@ -122,9 +125,24 @@ class _LoginViewState extends ConsumerState<LoginView> {
 
                   Navigator.of(ctx).pop();
 
-                  await ref
+                  final val = await ref
                       .read(authViewModelProvider.notifier)
                       .resetPasswordWithToken(token, newPassword, context);
+                  
+                
+                  // if (val != null && val['message'] == msg) {
+
+                  //   ScaffoldMessenger.of(context).showSnackBar(
+                  //     SnackBar(content: Text(msg), backgroundColor: Colors.green),
+                  //   );
+                  // } else {
+                  //   final msg = val?['message']?.toString() ?? 'Failed to reset password';
+                  //   ScaffoldMessenger.of(context).showSnackBar(
+                  //     SnackBar(content: Text(msg), backgroundColor: Colors.red),
+                  //   );
+
+                  // }
+                  // )
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF0B5FFF),
@@ -198,10 +216,8 @@ class _LoginViewState extends ConsumerState<LoginView> {
                     ScaffoldMessenger.of(
                       context,
                     ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.green));
-                    Future.delayed(
-                      const Duration(milliseconds: 300),
-                      () => _showResetWithTokenDialog(context),
-                    );
+
+                    _showResetWithTokenDialog(context);
                   }
                 },
                 style: ElevatedButton.styleFrom(
@@ -221,15 +237,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
   void login(BuildContext context) {
     final username = usernameController.text;
     final password = passwordController.text;
-
-    final passwordError = validatePassword(password);
-
-    if (passwordError != null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(passwordError), backgroundColor: Colors.red));
-      return;
-    }
 
     ref.read(authViewModelProvider.notifier).loginUser(context, username, password);
   }
@@ -258,10 +265,12 @@ class _LoginViewState extends ConsumerState<LoginView> {
               ),
             );
             ref.read(authViewModelProvider.notifier).resetMessage(false);
-          });
+          }
+          );
         }
       }
-    });
+    }
+    );
 
     return Scaffold(
       body: Container(
@@ -336,7 +345,6 @@ class _LoginViewState extends ConsumerState<LoginView> {
                           TextFormField(
                             controller: passwordController,
                             obscureText: !_passwordVisible,
-                            validator: validatePassword,
                             decoration: InputDecoration(
                               labelText: 'Password',
                               prefixIcon: const Icon(Icons.lock, color: Color(0xFF0B5FFF)),

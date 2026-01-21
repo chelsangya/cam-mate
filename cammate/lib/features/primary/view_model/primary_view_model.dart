@@ -1,7 +1,7 @@
 import 'package:cammate/features/primary/state/primary_state.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-final primaryViewModelProvider =
+final myPrimaryViewModelProvider =
     StateNotifierProvider.autoDispose<PrimaryViewModel, PrimaryState>(
       (ref) => PrimaryViewModel(),
     );

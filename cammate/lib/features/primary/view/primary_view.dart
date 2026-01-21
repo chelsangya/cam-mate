@@ -15,7 +15,7 @@ class _PrimaryViewState extends ConsumerState<PrimaryView> {
   Widget build(BuildContext context) {
     return Consumer(
       builder: (context, watch, _) {
-        final primaryState = ref.watch(primaryViewModelProvider);
+        final primaryState = ref.watch(myPrimaryViewModelProvider);
         return Scaffold(
           body: primaryState.lstWidgets[primaryState.index],
           bottomNavigationBar: SnakeNavigationBar.color(
@@ -38,11 +38,11 @@ class _PrimaryViewState extends ConsumerState<PrimaryView> {
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
             currentIndex: primaryState.index,
             onTap: (index) {
-              ref.read(primaryViewModelProvider.notifier).changeIndex(index);
+              ref.read(myPrimaryViewModelProvider.notifier).changeIndex(index);
             },
             items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.dashboard, size: 28), label: 'Marts'),
-              BottomNavigationBarItem(icon: Icon(Icons.camera, size: 28), label: 'Users'),
+              BottomNavigationBarItem(icon: Icon(Icons.shop, size: 28), label: 'My Mart'),
+              BottomNavigationBarItem(icon: Icon(Icons.local_parking, size: 28), label: 'Parking'),
               BottomNavigationBarItem(
                 icon: Icon(Icons.calendar_today, size: 28),
                 label: 'Activity',

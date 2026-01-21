@@ -131,7 +131,7 @@ class _CreateUserViewState extends ConsumerState<CreateUserView> {
                       initialValue: _selectedRole,
                       decoration: _fieldDecoration(context, 'Role'),
                       items:
-                          ['superuser', 'admin', 'manager', 'viewer']
+                          ['SUPERUSER', 'ADMIN', 'MANAGER', 'VIEWER']
                               .map(
                                 (r) => DropdownMenuItem(
                                   value: r,
@@ -176,8 +176,16 @@ class _CreateUserViewState extends ConsumerState<CreateUserView> {
                       decoration: _fieldDecoration(context, 'Password'),
                       obscureText: true,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty) return 'Password is required';
-                        if (v.trim().length < 6) return 'Password must be at least 6 characters';
+                        final value = v?.trim() ?? '';
+                        if (value.isEmpty) return 'Password is required';
+                        if (value.length < 8) return 'Password must be at least 8 characters';
+                        final hasUpper = RegExp(r'[A-Z]').hasMatch(value);
+                        final hasSpecial = RegExp(
+                          r'[!@#\$%\^&\*\(\)_\+\-=\[\]{};:\\\|,.<>\/?~`]',
+                        ).hasMatch(value);
+                        if (!hasUpper) return 'Password must contain at least one uppercase letter';
+                        if (!hasSpecial)
+                          return 'Password must contain at least one special character';
                         return null;
                       },
                     ),

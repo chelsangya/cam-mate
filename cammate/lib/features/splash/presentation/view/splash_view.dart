@@ -103,7 +103,7 @@ class _SplashViewState extends State<SplashView> with SingleTickerProviderStateM
           Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
           return;
         }
-        Navigator.of(context).pushReplacementNamed(AppRoute.superUserHomeRoute);
+        Navigator.of(context).pushReplacementNamed(AppRoute.homeRoute);
       },
     );
   }

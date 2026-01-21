@@ -5,7 +5,6 @@ import 'package:cammate/core/shared_pref/user_shared_prefs.dart';
 import 'package:cammate/features/user/data/model/user_model.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:jwt_decoder/jwt_decoder.dart';
 

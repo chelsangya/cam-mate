@@ -261,23 +261,22 @@ class AuthViewModel extends StateNotifier<AuthState> {
     try {
       state = state.copyWith(isLoading: true);
       final result = await authUseCase.resetPasswordWithToken(token, newPassword);
+      final msg = 'Password has been reset successfully';
       state = state.copyWith(isLoading: false);
       result.fold(
-        (failure) {
+        (failure) async {
           state = state.copyWith(
             error: failure.error,
             isLoading: false,
             showMessage: true,
             message: failure.error,
           );
+          await Future.delayed(Duration.zero);
         },
-        (success) {
-          state = state.copyWith(
-            isLoading: false,
-            message: success,
-            showMessage: true,
-            error: null,
-          );
+        (success) async {
+          print('Reset password success: $success');
+          state = state.copyWith(isLoading: false, message: msg, showMessage: true, error: null);
+          await Future.delayed(Duration.zero);
           // After resetting password, route user back to login
           Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
         },
@@ -321,6 +320,10 @@ class AuthViewModel extends StateNotifier<AuthState> {
           );
           // After changing password, it's reasonable to navigate back to profile/login
           Navigator.pop(context);
+          // show message
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(message), backgroundColor: Colors.green));
         },
       );
     } catch (e) {
@@ -350,6 +353,10 @@ class AuthViewModel extends StateNotifier<AuthState> {
       // stop loading before navigating so the login screen doesn't inherit a spinning state
       state = state.copyWith(isLoading: false, showMessage: false, error: null);
       Navigator.pushNamedAndRemoveUntil(context, AppRoute.loginRoute, (route) => false);
+      // show a snackbar with the message
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("Logged out successfully")));
     });
   }
 

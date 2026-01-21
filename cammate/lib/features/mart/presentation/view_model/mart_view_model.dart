@@ -81,6 +81,7 @@ class MartViewModel extends StateNotifier<MartState> {
           // refresh list
           Future.microtask(() => fetchAllMarts(context));
           successFlag = true;
+         
         },
       );
       return successFlag;
