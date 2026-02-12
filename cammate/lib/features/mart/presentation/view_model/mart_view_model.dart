@@ -43,7 +43,7 @@ class MartViewModel extends StateNotifier<MartState> {
           // On success: notify user, close create screen and refresh the list
           state = state.copyWith(
             isLoading: false,
-            message: success.toString(),
+            message: 'Mart has been created',
             showMessage: true,
             error: null,
           );
@@ -81,7 +81,6 @@ class MartViewModel extends StateNotifier<MartState> {
           // refresh list
           Future.microtask(() => fetchAllMarts(context));
           successFlag = true;
-         
         },
       );
       return successFlag;

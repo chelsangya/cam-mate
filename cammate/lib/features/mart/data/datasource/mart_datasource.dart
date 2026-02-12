@@ -38,9 +38,19 @@ class MartRemoteDataSource {
     final tokenResult = await _getValidToken();
     return tokenResult.fold((failure) => Left(failure), (token) async {
       try {
+        var data = mart.toJson();
+        var newData = {
+          "name": data['name'],
+          "description": data['description'],
+          "location": data['address'],
+          "email": data['contact_email'],
+          "phone": data['contact_phone'],
+          "password": data['password'],
+          "is_active": data['is_active'],
+        };
         final response = await dio.post(
           ApiEndpoints.createMart,
-          data: mart.toJson(),
+          data: newData,
           options: Options(
             headers: {
               "accept": "application/json",
@@ -50,7 +60,10 @@ class MartRemoteDataSource {
           ),
         );
 
-        if (response.statusCode == 201) {
+        print('Response status code: ${response.statusCode}');
+        print('Response data: ${response.data}');
+
+        if (response.statusCode == 200) {
           return Right(MartAPIModel.fromJson(response.data as Map<String, dynamic>));
         } else {
           return Left(

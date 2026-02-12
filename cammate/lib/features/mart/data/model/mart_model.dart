@@ -7,10 +7,11 @@ class MartAPIModel {
   final String name;
   final String? description;
   final String? address;
+  final String? password;
   @JsonKey(name: 'contact_email')
-  final String? contactEmail;
+  final String? contact_email;
   @JsonKey(name: 'contact_phone')
-  final String? contactPhone;
+  final String? contact_phone;
   @JsonKey(name: 'is_active')
   final bool? isActive;
   @JsonKey(name: 'created_at')
@@ -23,11 +24,12 @@ class MartAPIModel {
     required this.name,
     this.description,
     this.address,
-    this.contactEmail,
-    this.contactPhone,
+    this.contact_email,
+    this.contact_phone,
     this.isActive,
     this.createdAt,
     this.updatedAt,
+    this.password,
   });
 
   factory MartAPIModel.fromJson(Map<String, dynamic> json) {
@@ -36,15 +38,12 @@ class MartAPIModel {
       name: json['name'],
       description: json['description'],
       address: json['address'],
-      contactEmail: json['contact_email'],
-      contactPhone: json['contact_phone'],
+      contact_email: json['contact_email'],
+      contact_phone: json['contact_phone'],
+      password: json['password'],
       isActive: json['is_active'],
-      createdAt: json['created_at'] != null
-          ? DateTime.parse(json['created_at'])
-          : null,
-      updatedAt: json['updated_at'] != null
-          ? DateTime.parse(json['updated_at'])
-          : null,
+      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
     );
   }
 
@@ -54,8 +53,9 @@ class MartAPIModel {
       'name': name,
       'description': description,
       'address': address,
-      'contact_email': contactEmail,
-      'contact_phone': contactPhone,
+      'contact_email': contact_email,
+      'contact_phone': contact_phone,
+      'password': password,
       'is_active': isActive,
       'created_at': createdAt?.toIso8601String(),
       'updated_at': updatedAt?.toIso8601String(),
@@ -68,8 +68,9 @@ class MartAPIModel {
       name: entity.name,
       description: entity.description,
       address: entity.address,
-      contactEmail: entity.contactEmail,
-      contactPhone: entity.contactPhone,
+      password: entity.password,
+      contact_email: entity.contact_email,
+      contact_phone: entity.contact_phone,
       isActive: entity.isActive,
       createdAt: entity.createdAt,
       updatedAt: entity.updatedAt,
@@ -82,8 +83,9 @@ class MartAPIModel {
       name: name,
       description: description,
       address: address,
-      contactEmail: contactEmail,
-      contactPhone: contactPhone,
+      password: password,
+      contact_email: contact_email,
+      contact_phone: contact_phone,
       isActive: isActive,
       createdAt: createdAt,
       updatedAt: updatedAt,

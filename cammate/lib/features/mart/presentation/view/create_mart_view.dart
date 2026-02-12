@@ -17,6 +17,7 @@ class _CreateMartViewState extends ConsumerState<CreateMartView> {
   final TextEditingController _descriptionController = TextEditingController();
   final TextEditingController _addressController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _phoneController = TextEditingController();
   bool _isActive = true;
 
@@ -27,6 +28,7 @@ class _CreateMartViewState extends ConsumerState<CreateMartView> {
     _addressController.dispose();
     _emailController.dispose();
     _phoneController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -38,8 +40,10 @@ class _CreateMartViewState extends ConsumerState<CreateMartView> {
       description:
           _descriptionController.text.trim().isEmpty ? null : _descriptionController.text.trim(),
       address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-      contactEmail: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
-      contactPhone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+      contact_email: _emailController.text.trim().isEmpty ? null : _emailController.text.trim(),
+      contact_phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
+      password: _passwordController.text.trim().isEmpty ? null : _passwordController.text.trim(),
+      // contactPassword: _passwordController.text.trim().isEmpty ? null : _passwordController.text.trim(),
       isActive: _isActive,
     );
 
@@ -105,15 +109,20 @@ class _CreateMartViewState extends ConsumerState<CreateMartView> {
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
+                      controller: _phoneController,
+                      decoration: _fieldDecoration(context, 'Contact Phone'),
+                      keyboardType: TextInputType.phone,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
                       controller: _emailController,
                       decoration: _fieldDecoration(context, 'Contact Email'),
                       keyboardType: TextInputType.emailAddress,
                     ),
                     const SizedBox(height: 12),
                     TextFormField(
-                      controller: _phoneController,
-                      decoration: _fieldDecoration(context, 'Contact Phone'),
-                      keyboardType: TextInputType.phone,
+                      controller: _passwordController,
+                      decoration: _fieldDecoration(context, 'Contact Password'),
                     ),
                     const SizedBox(height: 12),
                     Row(

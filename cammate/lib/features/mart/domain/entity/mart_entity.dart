@@ -5,8 +5,9 @@ class MartEntity extends Equatable {
   final String name;
   final String? description;
   final String? address;
-  final String? contactEmail;
-  final String? contactPhone;
+  final String? password;
+  final String? contact_email;
+  final String? contact_phone;
   final bool? isActive;
   final DateTime? createdAt;
   final DateTime? updatedAt;
@@ -16,8 +17,9 @@ class MartEntity extends Equatable {
     required this.name,
     this.description,
     this.address,
-    this.contactEmail,
-    this.contactPhone,
+    this.password,
+    this.contact_email,
+    this.contact_phone,
     this.isActive,
     this.createdAt,
     this.updatedAt,
@@ -29,8 +31,9 @@ class MartEntity extends Equatable {
         name,
         description,
         address,
-        contactEmail,
-        contactPhone,
+        password,
+        contact_email,
+        contact_phone,
         isActive,
         createdAt,
         updatedAt,
@@ -41,8 +44,9 @@ class MartEntity extends Equatable {
         name: json["name"],
         description: json["description"],
         address: json["address"],
-        contactEmail: json["contact_email"],
-        contactPhone: json["contact_phone"],
+        contact_email: json["contact_email"],
+        contact_phone: json["contact_phone"],
+        password: json["password"],
         isActive: json["is_active"],
         createdAt: json["created_at"] != null
             ? DateTime.parse(json["created_at"])
@@ -57,8 +61,9 @@ class MartEntity extends Equatable {
         "name": name,
         "description": description,
         "address": address,
-        "contact_email": contactEmail,
-        "contact_phone": contactPhone,
+        "contact_email": contact_email,
+        "contact_phone": contact_phone,
+        "password": password,
         "is_active": isActive,
         "created_at": createdAt?.toIso8601String(),
         "updated_at": updatedAt?.toIso8601String(),
@@ -66,6 +71,6 @@ class MartEntity extends Equatable {
 
   @override
   String toString() {
-    return 'MartEntity(id: $id, name: $name, description: $description, address: $address, contactEmail: $contactEmail, contactPhone: $contactPhone, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
+    return 'MartEntity(id: $id, name: $name, description: $description, address: $address, contact_email: $contact_email, contact_phone: $contact_phone, password: $password, isActive: $isActive, createdAt: $createdAt, updatedAt: $updatedAt)';
   }
 }

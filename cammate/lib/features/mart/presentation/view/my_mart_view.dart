@@ -96,12 +96,8 @@ class _MyMartViewState extends ConsumerState<MyMartView> {
                                     final addressController = TextEditingController(
                                       text: mart.address,
                                     );
-                                    final emailController = TextEditingController(
-                                      text: mart.contactEmail,
-                                    );
-                                    final phoneController = TextEditingController(
-                                      text: mart.contactPhone,
-                                    );
+                                    final emailController = TextEditingController(text: mart.contact_email);
+                                    final phoneController = TextEditingController(text: mart.contact_phone);
                                     bool isActive = mart.isActive ?? true;
 
                                     return StatefulBuilder(
@@ -275,11 +271,11 @@ class _MyMartViewState extends ConsumerState<MyMartView> {
                                                               addressController.text.trim().isEmpty
                                                                   ? null
                                                                   : addressController.text.trim(),
-                                                          contactEmail:
+                                                          contact_email:
                                                               emailController.text.trim().isEmpty
                                                                   ? null
                                                                   : emailController.text.trim(),
-                                                          contactPhone:
+                                                          contact_phone:
                                                               phoneController.text.trim().isEmpty
                                                                   ? null
                                                                   : phoneController.text.trim(),
@@ -418,10 +414,8 @@ class _MyMartViewState extends ConsumerState<MyMartView> {
                           _infoRow(Icons.description, mart.description!),
                         if ((mart.address ?? '').isNotEmpty)
                           _infoRow(Icons.location_on, mart.address!),
-                        if ((mart.contactEmail ?? '').isNotEmpty)
-                          _infoRow(Icons.email, mart.contactEmail!),
-                        if ((mart.contactPhone ?? '').isNotEmpty)
-                          _infoRow(Icons.phone, mart.contactPhone!),
+                        if ((mart.contact_email ?? '').isNotEmpty) _infoRow(Icons.email, mart.contact_email!),
+                        if ((mart.contact_phone ?? '').isNotEmpty) _infoRow(Icons.contact_phone, mart.contact_phone!),
                         const SizedBox(height: 8),
                         Row(
                           children: [

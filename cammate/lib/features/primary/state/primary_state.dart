@@ -1,6 +1,6 @@
 import 'package:cammate/features/activity/presentation/view/activity_view.dart';
 import 'package:cammate/features/auth/presentation/view/profile_view.dart';
-import 'package:cammate/features/mart/presentation/view/my_mart_view.dart';
+import 'package:cammate/features/mart/presentation/view/marts_view.dart';
 import 'package:cammate/features/user/presentation/view/users_view.dart';
 import 'package:flutter/widgets.dart';
 
@@ -22,7 +22,7 @@ class PrimaryState {
       isLoading = false,
       // elements = [],
       lstWidgets = [
-        const MyMartView(),
+        const MartsView(),
         const UsersView(),
         const ActivitiesView(),
         const ProfileView(),

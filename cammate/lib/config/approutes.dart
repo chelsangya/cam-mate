@@ -11,6 +11,7 @@ class AppRoute {
 
   static const String loginRoute = '/login';
   static const String superUserHomeRoute = '/superUserHome';
+  static const String userHomeRoute = '/userHome';
   static const String superUserMartRoute = '/superUserMart';
   // static const String signinRoute = '/register';
   static const String profileRoute = '/profile';

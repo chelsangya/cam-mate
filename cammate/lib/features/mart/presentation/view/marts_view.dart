@@ -1,4 +1,5 @@
 import 'package:cammate/core/common/appbar/my_custom_appbar.dart';
+import 'package:cammate/core/shared_pref/user_shared_prefs.dart';
 import 'package:cammate/features/mart/presentation/view/create_mart_view.dart';
 import 'package:cammate/features/mart/presentation/view/mart_detail_view.dart';
 import 'package:cammate/features/mart/presentation/view_model/mart_view_model.dart';
@@ -14,11 +15,34 @@ class MartsView extends ConsumerStatefulWidget {
 
 class _MartsViewState extends ConsumerState<MartsView> {
   final TextEditingController _searchController = TextEditingController();
+  final UserSharedPrefs userSharedPrefs = UserSharedPrefs();
+  String role = "";
+  bool isSuperAdmin = false;
+  String title = "Marts";
 
   @override
   void initState() {
     super.initState();
     Future.microtask(() => ref.read(martViewModelProvider.notifier).fetchAllMarts(context));
+    _loadRole();
+  }
+
+  Future<void> _loadRole() async {
+    final res = await userSharedPrefs.getUserRole();
+    res.fold(
+      (_) => setState(() {
+        role = '';
+        isSuperAdmin = false;
+      }),
+      (r) => setState(() {
+        role = r ?? '';
+        isSuperAdmin = role.toLowerCase() == 'superuser';
+        title = "My Mart";
+        print('isSuperAdmin role: $isSuperAdmin');
+      }),
+    );
+
+    print('User role: $role');
   }
 
   @override
@@ -33,17 +57,22 @@ class _MartsViewState extends ConsumerState<MartsView> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF6F7F9),
-      appBar: myCustomAppBar(context, 'Marts'),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () async {
-          await Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateMartView()));
-          // refresh after returning in case a new mart was created
-          ref.read(martViewModelProvider.notifier).fetchAllMarts(context);
-        },
-        tooltip: 'Create Mart',
-        elevation: 4,
-        child: const Icon(Icons.add),
-      ),
+      appBar: myCustomAppBar(context, title),
+      floatingActionButton:
+          isSuperAdmin
+              ? FloatingActionButton(
+                onPressed: () async {
+                  await Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const CreateMartView()),
+                  );
+                  ref.read(martViewModelProvider.notifier).fetchAllMarts(context);
+                },
+                tooltip: 'Create Mart',
+                elevation: 4,
+                child: const Icon(Icons.add),
+              )
+              : null,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
@@ -86,9 +115,12 @@ class _MartsViewState extends ConsumerState<MartsView> {
                       onRefresh: _refresh,
                       child: ListView.builder(
                         padding: const EdgeInsets.symmetric(vertical: 8),
-                        itemCount: 1 + (marts.isEmpty ? 1 : marts.length),
+                        // itemCount: 1 + (marts.isEmpty ? 1 : marts.length),
+                        itemCount: (isSuperAdmin ? 1 : 0) + (marts.isEmpty ? 1 : marts.length),
+
                         itemBuilder: (context, index) {
-                          if (index == 0) {
+                          // if (index == 0) {
+                          if (isSuperAdmin && index == 0) {
                             // search bar at the top
                             return Padding(
                               padding: const EdgeInsets.only(bottom: 8.0),
@@ -157,7 +189,8 @@ class _MartsViewState extends ConsumerState<MartsView> {
                             );
                           }
 
-                          final mart = marts[index - 1];
+                          // final mart = marts[index - 1];
+                          final mart = marts[index - (isSuperAdmin ? 1 : 0)];
 
                           return Dismissible(
                             key: ValueKey(mart.id ?? mart.name),
@@ -263,7 +296,13 @@ class _MartsViewState extends ConsumerState<MartsView> {
                                 onTap:
                                     () => Navigator.push(
                                       context,
-                                      MaterialPageRoute(builder: (_) => MartDetailView(mart: mart)),
+                                      MaterialPageRoute(
+                                        builder:
+                                            (_) => MartDetailView(
+                                              mart: mart,
+                                              isSuperAdmin: isSuperAdmin,
+                                            ),
+                                      ),
                                     ),
                                 child: Padding(
                                   padding: const EdgeInsets.all(12.0),
@@ -303,9 +342,9 @@ class _MartsViewState extends ConsumerState<MartsView> {
                                             const SizedBox(height: 6),
                                             Row(
                                               children: [
-                                                if ((mart.contactEmail ?? '').isNotEmpty)
+                                                if ((mart.contact_email ?? '').isNotEmpty)
                                                   Text(
-                                                    mart.contactEmail ?? '',
+                                                    mart.contact_email ?? '',
                                                     style: const TextStyle(
                                                       fontSize: 12,
                                                       color: Colors.black45,

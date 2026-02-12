@@ -149,11 +149,7 @@ class AuthViewModel extends StateNotifier<AuthState> {
                   ).pushNamedAndRemoveUntil(AppRoute.superUserHomeRoute, (route) => false);
                   return;
                 }
-                Navigator.pushNamedAndRemoveUntil(
-                  context,
-                  AppRoute.superUserHomeRoute,
-                  (route) => false,
-                );
+                Navigator.pushNamedAndRemoveUntil(context, AppRoute.homeRoute, (route) => false);
               },
             );
           });
